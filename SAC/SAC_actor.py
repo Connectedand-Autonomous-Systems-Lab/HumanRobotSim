@@ -61,14 +61,35 @@ class DiagGaussianActor(nn.Module):
         super().__init__()
 
         self.log_std_bounds = log_std_bounds
-        self.trunk = utils.mlp(obs_dim, hidden_dim, 2 * action_dim, hidden_depth)
+        combined_input_dim = obs_dim + 8*8*64
+
+        # print(f"combined input dim shape: {combined_input_dim}")
+
+        self.trunk = utils.mlp(combined_input_dim, hidden_dim, 2 * action_dim, hidden_depth)
+        self.cnn = utils.cnn()
 
         self.outputs = dict()
         self.apply(utils.weight_init)
 
-    def forward(self, obs):
-        mu, log_std = self.trunk(obs).chunk(2, dim=-1)
+    def forward(self,image, obs):
+        
+        # Check the shape -- this happens in training
+        if len(image.shape) == 3 and image.shape[0] == 40:  # Detect shape [40, 512, 512]
+            # Convert to [40, 1, 512, 512]
+            image = image.unsqueeze(1)
 
+        image_features = self.cnn(image)  # Shape: (batch_size, 32, img_height/4, img_width/4)
+        image_features = image_features.view(image_features.size(0), -1)  # Flatten CNN output
+        
+        # Concatenate image features with array input
+        combined_input = torch.cat((image_features, obs), dim=1)  # Concatenate along feature dimension
+
+        print(f"Image shape: {image.shape}")
+        print(f"Image features shape: {image_features.shape}")
+        print(f"Obs shape: {obs.shape}")
+        print(f"Combined input shape: {combined_input.shape}")
+
+        mu, log_std = self.trunk(combined_input).chunk(2, dim=-1)
         # constrain log_std inside [log_std_min, log_std_max]
         log_std = torch.tanh(log_std)
         log_std_min, log_std_max = self.log_std_bounds

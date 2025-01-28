@@ -52,18 +52,39 @@ class MLP(nn.Module):
 
 
 def mlp(input_dim, hidden_dim, output_dim, hidden_depth, output_mod=None):
-    if hidden_depth == 0:
+    if hidden_depth == 0: # Creates a single linear layer directly connecting the input to the output.
         mods = [nn.Linear(input_dim, output_dim)]
     else:
-        mods = [nn.Linear(input_dim, hidden_dim), nn.ReLU(inplace=True)]
+        input_dim = input_dim
+        mods = [nn.Linear(input_dim, hidden_dim), nn.ReLU(inplace=True)] # A linear layer from the input to the first hidden layer.
         for i in range(hidden_depth - 1):
-            mods += [nn.Linear(hidden_dim, hidden_dim), nn.ReLU(inplace=True)]
-        mods.append(nn.Linear(hidden_dim, output_dim))
+            mods += [nn.Linear(hidden_dim, hidden_dim), nn.ReLU(inplace=True)] # Linear layers connecting hidden layers to each other.
+        mods.append(nn.Linear(hidden_dim, output_dim)) # Appends a final linear layer connecting the last hidden layer to the output.
     if output_mod is not None:
         mods.append(output_mod)
-    trunk = nn.Sequential(*mods)
+    trunk = nn.Sequential(*mods)  # Uses nn.Sequential to combine the layers in mods into a single model (trunk).
     return trunk
 
+def cnn():
+    # CNN for image processing
+    cnn = nn.Sequential(
+        # Convolutional layer 1
+        nn.Conv2d(1, 16, kernel_size=3, stride=2, padding=1),  # Output: (16, img_height/2, img_width/2)
+        nn.ReLU(),
+        nn.MaxPool2d(kernel_size=2, stride=2),  # Output: (16, img_height/4, img_width/4)
+        
+        # Convolutional layer 2
+        nn.Conv2d(16, 32, kernel_size=3, stride=2, padding=1),  # Output: (32, img_height/8, img_width/8)
+        nn.ReLU(),
+        nn.MaxPool2d(kernel_size=2, stride=2),  # Output: (32, img_height/16, img_width/16)
+
+        # Convolutional layer 3
+        nn.Conv2d(32, 64, kernel_size=3, stride=2, padding=1),  # Output: (64, img_height/32, img_width/32)
+        nn.ReLU(),
+        nn.MaxPool2d(kernel_size=2, stride=2)  # Output: (64, img_height/64, img_width/64)
+    )
+
+    return cnn
 
 def to_np(t):
     if t is None:

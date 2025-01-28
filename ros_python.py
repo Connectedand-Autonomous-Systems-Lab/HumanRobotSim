@@ -92,7 +92,7 @@ class ROS_env:
 
         self.publish_target.publish(self.target[0], self.target[1])
 
-        latest_scan, distance, cos, sin, _, _, action, reward, free_pixels= self.step(
+        latest_map, latest_scan, distance, cos, sin, _, _, action, reward, free_pixels= self.step(
             lin_velocity=action[0], ang_velocity=action[1]
         )
         
@@ -111,7 +111,7 @@ class ROS_env:
             else:
                 print(f"Failed to clear costmap: {future.exception()}.")
 
-        return latest_scan, distance, cos, sin, False, False, action, reward, free_pixels
+        return latest_map, latest_scan, distance, cos, sin, False, False, action, reward, free_pixels
 
     def eval(self, scenario):
         self.cmd_vel_publisher.publish_cmd_vel(0.0, 0.0)

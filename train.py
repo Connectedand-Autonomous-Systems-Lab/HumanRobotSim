@@ -8,7 +8,7 @@ import torch
 import numpy as np
 from utils import record_eval_positions
 from pretrain_utils import Pretraining
-
+from colorama import Fore, Style
 
 def main(args=None):
     """Main training function"""
@@ -24,7 +24,7 @@ def main(args=None):
     episodes_per_epoch = 7 # how many episodes to run in single epoch
     episode = 0  # starting episode number
     train_every_n = 2  # train and update network parameters every n episodes
-    training_iterations = 500  # how many batches to use for single training cycle
+    training_iterations = 10  # how many batches to use for single training cycle
     batch_size = 40  # batch size for each training iteration
     max_steps = 300  # maximum number of steps in single episode
     steps = 0  # starting step number
@@ -77,11 +77,12 @@ def main(args=None):
 
     print(f"Training using {device}")
     while epoch < max_epochs:  # train until max_epochs is reached
-        print(f"step: {steps}  |  episode: {episode}  |  epoch: {epoch}  |  Map free pixels: {free_pixels}")
+        print(Fore.GREEN+  f"step: {steps}  |  episode: {episode}  |  epoch: {epoch}  |  Map free pixels: {free_pixels}"+ Style.RESET_ALL)
         state, terminal = model.prepare_state(
-            latest_map, latest_scan, distance, cos, sin, collision, goal, a
+            latest_scan, distance, cos, sin, collision, goal, a
         )  # get state a state representation from returned data from the environment
-        action = model.get_action(state, True)  # get an action from the model
+        
+        action = model.get_action(latest_map, state, True)  # get an action from the model
         action = (action + np.random.normal(0, 0.2, size=action_dim)).clip(
             -max_action, max_action
         )  # add random noise to the model
@@ -90,6 +91,7 @@ def main(args=None):
             action[1],
         ]  # clip linear velocity to [0, 0.5] m/s range
 
+        map = latest_map
         latest_map, latest_scan, distance, cos, sin, collision, goal, a, reward, free_pixels = ros.step(
             lin_velocity=a_in[0], ang_velocity=a_in[1]
         )  # get data from the environment
@@ -97,17 +99,17 @@ def main(args=None):
             latest_scan, distance, cos, sin, collision, goal, a
         )  # get a next state representation
         replay_buffer.add(
-            state, action, reward, terminal, next_state
+            map, state, action, reward, terminal, latest_map, next_state
         )  # add experience to the replay buffer
 
         if (
             terminal or steps == max_steps
         ):  # reset environment of terminal stat ereached, or max_steps were taken
             print("terminal state reached")
-            latest_scan, distance, cos, sin, collision, goal, a, reward, free_pixels = ros.reset()
+            latest_map, latest_scan, distance, cos, sin, collision, goal, a, reward, free_pixels = ros.reset()
             episode += 1
             if episode % train_every_n == 0:
-                print("training the model")
+                print(Fore.BLUE+ "training the model"+ Style.RESET_ALL)
                 model.train(
                     replay_buffer=replay_buffer,
                     iterations=training_iterations,

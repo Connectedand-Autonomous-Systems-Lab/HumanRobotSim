@@ -8,7 +8,7 @@ import SAC.SAC_utils as utils
 from SAC.SAC_critic import DoubleQCritic as critic_model
 from SAC.SAC_actor import DiagGaussianActor as actor_model
 from torch.utils.tensorboard import SummaryWriter
-
+from colorama import Fore, Style
 
 class SAC(object):
     """SAC algorithm."""
@@ -134,7 +134,8 @@ class SAC(object):
         print(f"Loaded weights from: {directory}")
 
     def train(self, replay_buffer, iterations, batch_size):
-        for _ in range(iterations):
+        for i in range(iterations):
+            print(Fore.GREEN+ f"training iterations {i} / {iterations}" + Style.RESET_ALL)
             self.update(
                 replay_buffer=replay_buffer, step=self.step, batch_size=batch_size
             )
@@ -152,34 +153,49 @@ class SAC(object):
     def alpha(self):
         return self.log_alpha.exp()
 
-    def get_action(self, obs, add_noise):
+    def prepare_map(self, image):
+        # Assuming `image` is a NumPy array (e.g., dtype=uint8)
+        image_tensor = torch.tensor(image, dtype=torch.float32).to(self.device)  # Convert to float tensor
+        image_tensor /= 255.0  # Normalize if the image is in [0, 255] range
+
+        # Add batch and channel dimensions if not already present
+        if len(image_tensor.shape) == 3:  # If shape is (H, W, C)
+            image_tensor = image_tensor.permute(2, 0, 1).unsqueeze(0)  # Convert to (1, C, H, W)
+        elif len(image_tensor.shape) == 2:  # If shape is (H, W)
+            image_tensor = image_tensor.unsqueeze(0).unsqueeze(0)  # Convert to (1, 1, H, W)
+
+        return image_tensor
+
+    def get_action(self, image, obs, add_noise):
         if add_noise:
             return (
-                self.act(obs) + np.random.normal(0, 0.2, size=self.action_dim)
+                self.act(image, obs) + np.random.normal(0, 0.2, size=self.action_dim)
             ).clip(self.action_range[0], self.action_range[1])
         else:
-            return self.act(obs)
+            return self.act(image, obs)
 
-    def act(self, obs, sample=False):
+    def act(self, image, obs, sample=False):
         obs = torch.FloatTensor(obs).to(self.device)
         obs = obs.unsqueeze(0)
-        dist = self.actor(obs)
+        map_tensor = self.prepare_map(image)
+        
+        dist = self.actor(map_tensor, obs)
         action = dist.sample() if sample else dist.mean
         action = action.clamp(*self.action_range)
         assert action.ndim == 2 and action.shape[0] == 1
         return utils.to_np(action[0])
 
-    def update_critic(self, obs, action, reward, next_obs, done, step):
-        dist = self.actor(next_obs)
+    def update_critic(self, image, obs, action, reward, next_image, next_obs, done, step):
+        dist = self.actor(next_image, next_obs)
         next_action = dist.rsample()
         log_prob = dist.log_prob(next_action).sum(-1, keepdim=True)
-        target_Q1, target_Q2 = self.critic_target(next_obs, next_action)
+        target_Q1, target_Q2 = self.critic_target(next_image, next_obs, next_action)
         target_V = torch.min(target_Q1, target_Q2) - self.alpha.detach() * log_prob
         target_Q = reward + ((1 - done) * self.discount * target_V)
         target_Q = target_Q.detach()
 
         # get current Q estimates
-        current_Q1, current_Q2 = self.critic(obs, action)
+        current_Q1, current_Q2 = self.critic(image, obs, action)
         critic_loss = F.mse_loss(current_Q1, target_Q) + F.mse_loss(
             current_Q2, target_Q
         )
@@ -193,11 +209,11 @@ class SAC(object):
         if self.log_dist_and_hist:
             self.critic.log(self.writer, step)
 
-    def update_actor_and_alpha(self, obs, step):
-        dist = self.actor(obs)
+    def update_actor_and_alpha(self, image, obs, step):
+        dist = self.actor(image, obs)
         action = dist.rsample()
         log_prob = dist.log_prob(action).sum(-1, keepdim=True)
-        actor_Q1, actor_Q2 = self.critic(obs, action)
+        actor_Q1, actor_Q2 = self.critic(image, obs, action)
 
         actor_Q = torch.min(actor_Q1, actor_Q2)
         actor_loss = (self.alpha.detach() * log_prob - actor_Q).mean()
@@ -229,14 +245,18 @@ class SAC(object):
 
     def update(self, replay_buffer, step, batch_size):
         (
+            batch_images,
             batch_states,
             batch_actions,
             batch_rewards,
             batch_dones,
+            batch_next_images,
             batch_next_states,
         ) = replay_buffer.sample_batch(batch_size)
 
+        image = torch.Tensor(batch_images).to(self.device)
         state = torch.Tensor(batch_states).to(self.device)
+        next_image = torch.Tensor(batch_next_images).to(self.device)
         next_state = torch.Tensor(batch_next_states).to(self.device)
         action = torch.Tensor(batch_actions).to(self.device)
         reward = torch.Tensor(batch_rewards).to(self.device)
@@ -244,15 +264,15 @@ class SAC(object):
         self.train_metrics_dict["train/batch_reward_av"].append(batch_rewards.mean().item())
         self.writer.add_scalar("train/batch_reward", batch_rewards.mean(), step)
 
-        self.update_critic(state, action, reward, next_state, done, step)
+        self.update_critic(image, state, action, reward, next_image, next_state, done, step)
 
         if step % self.actor_update_frequency == 0:
-            self.update_actor_and_alpha(state, step)
+            self.update_actor_and_alpha(image, state, step)
 
         if step % self.critic_target_update_frequency == 0:
             utils.soft_update_params(self.critic, self.critic_target, self.critic_tau)
 
-    def prepare_state(self, latest_map, latest_scan, distance, cos, sin, collision, goal, action):
+    def prepare_state(self, latest_scan, distance, cos, sin, collision, goal, action):
         # update the returned data from ROS into a form used for learning in the current model
         latest_scan = np.array(latest_scan)
 

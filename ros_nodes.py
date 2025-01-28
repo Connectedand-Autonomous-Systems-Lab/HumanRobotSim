@@ -33,8 +33,8 @@ class SensorSubscriber(Node):
         self.latest_heading = None
         self.latest_scan = None
         self.latest_map = None
-        self.canvas_size_x = 500
-        self.canvas_size_y = 500
+        self.canvas_size_x = 512
+        self.canvas_size_y = 512
 
     def scan_listener_callback(self, msg):
         self.latest_scan = msg.ranges[:]
@@ -120,7 +120,7 @@ class SensorSubscriber(Node):
         # canvas[canvas_size_x/2 - origin_x : canvas_size_x/2 + (input_size_x - origin_x)    ,    canvas_size_y/2 - origin_y : canvas_size_y/2 + (input_size_y - origin_y)] = input_image
         
         # Keep the map unmoved
-        canvas[int(canvas_size_x/2) + position_of_map_origin_x: int(canvas_size_x/2) + position_of_map_origin_x+input_size_x , int(canvas_size_y/2)+ position_of_map_origin_y: int(canvas_size_y/2)+ position_of_map_origin_y+input_size_y] = input_image
+        canvas[int(self.canvas_size_x/2) + position_of_map_origin_x: int(self.canvas_size_x/2) + position_of_map_origin_x+input_size_x , int(self.canvas_size_y/2)+ position_of_map_origin_y: int(self.canvas_size_y/2)+ position_of_map_origin_y+input_size_y] = input_image
         
         return canvas
 

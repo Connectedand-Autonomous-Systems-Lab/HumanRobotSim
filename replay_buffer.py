@@ -14,8 +14,8 @@ class ReplayBuffer(object):
         self.buffer = deque()
         random.seed(random_seed)
 
-    def add(self, s, a, r, t, s2):
-        experience = (s, a, r, t, s2)
+    def add(self, image, s, a, r, t, image2, s2):
+        experience = (image, s, a, r, t, image2, s2)
         if self.count < self.buffer_size:
             self.buffer.append(experience)
             self.count += 1
@@ -32,22 +32,26 @@ class ReplayBuffer(object):
         else:
             batch = random.sample(self.buffer, batch_size)
 
-        s_batch = np.array([_[0] for _ in batch])
-        a_batch = np.array([_[1] for _ in batch])
-        r_batch = np.array([_[2] for _ in batch]).reshape(-1, 1)
-        t_batch = np.array([_[3] for _ in batch]).reshape(-1, 1)
-        s2_batch = np.array([_[4] for _ in batch])
+        image_batch = np.array([_[0] for _ in batch])
+        s_batch = np.array([_[1] for _ in batch])
+        a_batch = np.array([_[2] for _ in batch])
+        r_batch = np.array([_[3] for _ in batch]).reshape(-1, 1)
+        t_batch = np.array([_[4] for _ in batch]).reshape(-1, 1)
+        image2_batch = np.array([_[5] for _ in batch])
+        s2_batch = np.array([_[6] for _ in batch])
 
-        return s_batch, a_batch, r_batch, t_batch, s2_batch
+        return image_batch, s_batch, a_batch, r_batch, t_batch, image2_batch, s2_batch
 
     def return_buffer(self):
-        s = np.array([_[0] for _ in self.buffer])
-        a = np.array([_[1] for _ in self.buffer])
-        r = np.array([_[2] for _ in self.buffer]).reshape(-1, 1)
-        t = np.array([_[3] for _ in self.buffer]).reshape(-1, 1)
-        s2 = np.array([_[4] for _ in self.buffer])
+        image = np.array([_[0] for _ in self.buffer])
+        s = np.array([_[1] for _ in self.buffer])
+        a = np.array([_[2] for _ in self.buffer])
+        r = np.array([_[3] for _ in self.buffer]).reshape(-1, 1)
+        t = np.array([_[4] for _ in self.buffer]).reshape(-1, 1)
+        image2 = np.array([_[5] for _ in self.buffer])
+        s2 = np.array([_[6] for _ in self.buffer])
 
-        return s, a, r, t, s2
+        return image, s, a, r, t, image2, s2
 
     def clear(self):
         self.buffer.clear()
