@@ -9,6 +9,21 @@ import numpy as np
 from utils import record_eval_positions
 from pretrain_utils import Pretraining
 from colorama import Fore, Style
+import rclpy
+from tf2_ros import Buffer, TransformException
+from tf2_ros.transform_listener import TransformListener
+
+def check_frame_availability(tf_buffer):
+    try:
+        transform = tf_buffer.lookup_transform(
+            'map', 'odom',# Transform from 'odom' to 'map'
+            rclpy.clock.Clock().now(),
+            timeout=rclpy.duration.Duration(seconds=5.0))
+        return True
+
+    except TransformException as e:
+        print(Fore.RED+ str(e) + Style.RESET_ALL)
+        return False
 
 def main(args=None):
     """Main training function"""
@@ -21,10 +36,10 @@ def main(args=None):
     nr_eval_episodes = 10  # how many episodes to use to run evaluation
     max_epochs = 100  # max number of epochs
     epoch = 0  # starting epoch number
-    episodes_per_epoch = 7 # how many episodes to run in single epoch
+    episodes_per_epoch = 3 # how many episodes to run in single epoch
     episode = 0  # starting episode number
     train_every_n = 2  # train and update network parameters every n episodes
-    training_iterations = 10  # how many batches to use for single training cycle
+    training_iterations = 2  # how many batches to use for single training cycle
     batch_size = 40  # batch size for each training iteration
     max_steps = 300  # maximum number of steps in single episode
     steps = 0  # starting step number
@@ -35,6 +50,8 @@ def main(args=None):
     )
     save_every = 100  # save the model every n training cycles
 
+    is_transform_available = True
+    
     model = SAC(
         state_dim=state_dim,
         action_dim=action_dim,
@@ -70,14 +87,14 @@ def main(args=None):
         replay_buffer = ReplayBuffer(
             buffer_size=5e3, random_seed=42
         )  # if not experiences are loaded, instantiate an empty buffer
-
     latest_map, latest_scan, distance, cos, sin, collision, goal, a, reward, free_pixels = ros.step(
-        lin_velocity=0.0, ang_velocity=0.0
+        is_transform_available, lin_velocity=0.0, ang_velocity=0.0
     )  # get the initial step state
 
     print(f"Training using {device}")
     while epoch < max_epochs:  # train until max_epochs is reached
-        print(Fore.GREEN+  f"step: {steps}  |  episode: {episode}  |  epoch: {epoch}  |  Map free pixels: {free_pixels}"+ Style.RESET_ALL)
+        # is_transform_available = check_frame_availability(tf_buffer)
+        print(Fore.GREEN+  f"step: {steps}  |  episode: {episode}  |  epoch: {epoch}  |  Map value: {free_pixels}"+ Style.RESET_ALL)
         state, terminal = model.prepare_state(
             latest_scan, distance, cos, sin, collision, goal, a
         )  # get state a state representation from returned data from the environment
@@ -93,7 +110,7 @@ def main(args=None):
 
         map = latest_map
         latest_map, latest_scan, distance, cos, sin, collision, goal, a, reward, free_pixels = ros.step(
-            lin_velocity=a_in[0], ang_velocity=a_in[1]
+            is_transform_available, lin_velocity=a_in[0], ang_velocity=a_in[1]
         )  # get data from the environment
         next_state, terminal = model.prepare_state(
             latest_scan, distance, cos, sin, collision, goal, a
@@ -106,7 +123,8 @@ def main(args=None):
             terminal or steps == max_steps
         ):  # reset environment of terminal stat ereached, or max_steps were taken
             print("terminal state reached")
-            latest_map, latest_scan, distance, cos, sin, collision, goal, a, reward, free_pixels = ros.reset()
+            latest_scan = latest_map = None
+            latest_map, latest_scan, distance, cos, sin, collision, goal, a, reward, free_pixels = ros.reset(is_transform_available)
             episode += 1
             if episode % train_every_n == 0:
                 print(Fore.BLUE+ "training the model"+ Style.RESET_ALL)
@@ -145,7 +163,7 @@ def eval(model, env, scenarios, epoch, max_steps):
     gl = 0
     for scenario in scenarios:
         count = 0
-        latest_scan, distance, cos, sin, collision, goal, a, reward = env.eval(
+        latest_map, latest_scan, distance, cos, sin, collision, goal, a, reward = env.eval(
             scenario=scenario
         )
         while count < max_steps:
@@ -154,10 +172,10 @@ def eval(model, env, scenarios, epoch, max_steps):
             )
             if terminal:
                 break
-            action = model.get_action(state, False)
+            action = model.get_action(latest_map, state, False)
             a_in = [(action[0] + 1) / 2, action[1]]
-            latest_scan, distance, cos, sin, collision, goal, a, reward = env.step(
-                lin_velocity=a_in[0], ang_velocity=a_in[1]
+            latest_map, latest_scan, distance, cos, sin, collision, goal, a, reward, free_pixels= env.step(
+                True, lin_velocity=a_in[0], ang_velocity=a_in[1]
             )
             avg_reward += reward
             count += 1

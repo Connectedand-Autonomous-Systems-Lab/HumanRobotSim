@@ -84,10 +84,10 @@ class DiagGaussianActor(nn.Module):
         # Concatenate image features with array input
         combined_input = torch.cat((image_features, obs), dim=1)  # Concatenate along feature dimension
 
-        print(f"Image shape: {image.shape}")
-        print(f"Image features shape: {image_features.shape}")
-        print(f"Obs shape: {obs.shape}")
-        print(f"Combined input shape: {combined_input.shape}")
+        # print(f"Image shape: {image.shape}")
+        # print(f"Image features shape: {image_features.shape}")
+        # print(f"Obs shape: {obs.shape}")
+        # print(f"Combined input shape: {combined_input.shape}")
 
         mu, log_std = self.trunk(combined_input).chunk(2, dim=-1)
         # constrain log_std inside [log_std_min, log_std_max]

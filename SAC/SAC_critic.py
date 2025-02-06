@@ -34,11 +34,11 @@ class DoubleQCritic(nn.Module):
 
         obs_action = torch.cat([obs, action], dim=-1)
 
-        print(f"Image shape: {image.shape}")
-        print(f"Image features shape: {image_features.shape}")
-        print(f"Obs shape: {obs.shape}")
-        print(f"Action shape: {action.shape}")
-        print(f"Obs_Action shape: {obs_action.shape}")
+        # print(f"Image shape: {image.shape}")
+        # print(f"Image features shape: {image_features.shape}")
+        # print(f"Obs shape: {obs.shape}")
+        # print(f"Action shape: {action.shape}")
+        # print(f"Obs_Action shape: {obs_action.shape}")
         
         q1 = self.Q1(obs_action)
         q2 = self.Q2(obs_action)
