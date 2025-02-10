@@ -33,13 +33,16 @@ def main(args=None):
     device = torch.device(
         "cuda" if torch.cuda.is_available() else "cpu"
     )  # using cuda if it is available, cpu otherwise
-    nr_eval_episodes = 10  # how many episodes to use to run evaluation
+
+    # Resource saving parameters
+    nr_eval_episodes = 2  # how many episodes to use to run evaluation
     max_epochs = 100  # max number of epochs
-    epoch = 0  # starting epoch number
     episodes_per_epoch = 3 # how many episodes to run in single epoch
-    episode = 0  # starting episode number
     train_every_n = 2  # train and update network parameters every n episodes
     training_iterations = 2  # how many batches to use for single training cycle
+
+    epoch = 0  # starting epoch number
+    episode = 0  # starting episode number
     batch_size = 40  # batch size for each training iteration
     max_steps = 300  # maximum number of steps in single episode
     steps = 0  # starting step number
@@ -181,6 +184,7 @@ def eval(model, env, scenarios, epoch, max_steps):
             count += 1
             col += collision
             gl += goal
+        env.reset(True)
     avg_reward /= len(scenarios)
     avg_col = col / len(scenarios)
     avg_goal = gl / len(scenarios)

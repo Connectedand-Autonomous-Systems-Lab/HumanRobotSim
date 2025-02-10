@@ -1,0 +1,74 @@
+import os
+
+from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument, ExecuteProcess
+from launch.substitutions import LaunchConfiguration
+from launch_ros.actions import Node
+from ament_index_python.packages import get_package_share_directory
+
+
+def generate_launch_description():
+    use_sim_time = LaunchConfiguration('use_sim_time')
+    slam_params_file = LaunchConfiguration('slam_params_file')
+    namespace = LaunchConfiguration('namespace')
+
+    declare_use_sim_time_argument = DeclareLaunchArgument(
+        'use_sim_time',
+        default_value='true',
+        description='Use simulation/Gazebo clock')
+    declare_use_sim_time_argument = DeclareLaunchArgument(
+        'namespace',
+        default_value='tb3_0',
+        description='namespace')
+    declare_slam_params_file_cmd = DeclareLaunchArgument(
+        'slam_params_file',
+        # default_value=os.path.join(get_package_share_directory("slam_toolbox"),
+        #                            'config', 'mapper_params_online_async.yaml'),
+        default_value='/home/mayooran/Documents/human_robot_exploration_ws/src/human_robot_pkg/config/tb3_0.yaml',
+        description='Full path to the ROS2 parameters file to use for the slam_toolbox node')
+
+    set_map_frame = ExecuteProcess(
+        cmd=[[
+            'ros2 param set ',
+            'tb3_0/slam_toolbox',
+            '/map_frame',
+            'tb3_0/map'
+        ]],
+        shell=True
+    )
+    set_odom_frame = ExecuteProcess(
+        cmd=[[
+            'ros2 param set ',
+            'tb3_0/slam_toolbox',
+            '/odom_frame',
+            'tb3_0/odom'
+        ]],
+        shell=True
+    )
+
+    start_async_slam_toolbox_node = Node(
+        parameters=[
+          slam_params_file,
+          {'use_sim_time': use_sim_time}
+        ],
+        package='slam_toolbox',
+        executable='async_slam_toolbox_node',
+        name='slam_toolbox',
+        output='screen',
+        remappings=[
+                ('/scan', ['/' , LaunchConfiguration('namespace'),'/scan']),
+                ('/map', [ '/' ,LaunchConfiguration('namespace'), '/map']),
+                # ('odom', [LaunchConfiguration('namespace'), '/odom']),
+                # ('base_footprint', [LaunchConfiguration('namespace'), '/base_footprint'])
+            ]
+        )
+
+    ld = LaunchDescription()
+
+    ld.add_action(declare_use_sim_time_argument)
+    ld.add_action(declare_slam_params_file_cmd)
+    ld.add_action(start_async_slam_toolbox_node)
+    ld.add_action(set_map_frame)
+    ld.add_action(set_odom_frame)
+
+    return ld
