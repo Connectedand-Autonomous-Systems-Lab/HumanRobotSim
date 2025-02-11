@@ -65,14 +65,22 @@ def generate_launch_description():
         }.items()
     )
 
-    map_merge = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(get_package_share_directory('multirobot_map_merge'), 'launch', 'map_merge.launch.py')
-        ),
-        launch_arguments={
-            'use_sim_time': 'true'
-        }.items()
-    )
+    human_map_to_map = Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            arguments = ['--x', '0', '--y', '0', '--z', '1', '--yaw', '0', '--pitch', '0', '--roll', '0', '--frame-id', 'map', '--child-frame-id', 'human/map']
+        )
+
+    tb3_0_map_to_map = Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            arguments = ['--x', '0', '--y', '0', '--z', '1', '--yaw', '0', '--pitch', '0', '--roll', '0', '--frame-id', 'map', '--child-frame-id', 'tb3_0/map']
+        )
+
+    map_merge = Node(
+            package='human_robot_pkg',
+            executable='map_merge_node'
+            )
 
     tb3_0_nav2_bringup = GroupAction(
         actions=[
@@ -86,5 +94,7 @@ def generate_launch_description():
         rviz2,
         slam_toolbox_tb3_0,
         slam_toolbox_human,
-        map_merge
+        map_merge,
+        human_map_to_map,
+        tb3_0_map_to_map
     })

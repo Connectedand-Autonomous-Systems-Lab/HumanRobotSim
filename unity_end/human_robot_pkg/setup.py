@@ -24,6 +24,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'map_merge_node = human_robot_pkg.merge_map:main',
         ],
     },
 )
