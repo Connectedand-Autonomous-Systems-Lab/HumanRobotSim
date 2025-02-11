@@ -1,6 +1,6 @@
 import os
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription, GroupAction
+from launch.actions import IncludeLaunchDescription, GroupAction, DeclareLaunchArgument
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from ament_index_python.packages import get_package_share_directory
 from launch_ros.actions import Node, PushRosNamespace
@@ -33,13 +33,13 @@ def generate_launch_description():
         }.items()
     )
 
-    slam_toolbox_tb3_0 = IncludeLaunchDescription(
+    cartographer_tb3_0 = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(get_package_share_directory('human_robot_pkg'), 'launch', 'online_async_launch.py')
-            # os.path.join(get_package_share_directory('slam_toolbox'), 'launch', 'online_async_launch.py')
+            os.path.join(get_package_share_directory('turtlebot3_cartographer'), 'launch', 'cartographer.launch.py')
         ),
         launch_arguments={
             'use_sim_time': 'true',
+            # 'cartographer_config_dir': '/home/mayooran/Documents/DRL-Robot-Navigation-ROS2/src/drl_exploration/unity_end/human_robot_pkg/config'
             # 'slam_params_file': '/home/mayooran/Documents/human_robot_exploration_ws/src/human_robot_pkg/config/tb3_0.yaml',
             'namespace':'tb3_0'
         }.items()
@@ -48,12 +48,20 @@ def generate_launch_description():
     slam_toolbox_human = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(get_package_share_directory('human_robot_pkg'), 'launch', 'online_async_launch.py')
-            # os.path.join(get_package_share_directory('slam_toolbox'), 'launch', 'online_async_launch.py')
         ),
         launch_arguments={
             'use_sim_time': 'true',
-            'slam_params_file': '/home/mayooran/Documents/human_robot_exploration_ws/src/human_robot_pkg/config/human.yaml',
             'namespace':'human'
+        }.items()
+    )
+
+    slam_toolbox_tb3_0 = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(get_package_share_directory('human_robot_pkg'), 'launch', 'online_async_launch.py')
+        ),
+        launch_arguments={
+            'use_sim_time': 'true',
+            'namespace':'tb3_0'
         }.items()
     )
 
@@ -66,26 +74,17 @@ def generate_launch_description():
         }.items()
     )
 
-    tb3_0_slam_toolbox = GroupAction(
-        actions=[
-            PushRosNamespace('tb3_0'),
-            slam_toolbox_tb3_0,
-        ]
-    )
-
     tb3_0_nav2_bringup = GroupAction(
         actions=[
             PushRosNamespace('tb3_0'),
             nav2_bringup,
         ]
     )
-    
+
     return LaunchDescription({
         ros_tcp_endpoint,
         rviz2,
-        # tb3_0_nav2_bringup,
-        # tb3_0_slam_toolbox
         slam_toolbox_tb3_0,
-        # slam_toolbox_human,
-        # map_merge
+        slam_toolbox_human,
+        map_merge
     })
