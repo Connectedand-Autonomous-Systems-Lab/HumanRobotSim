@@ -272,7 +272,7 @@ class SAC(object):
         if step % self.critic_target_update_frequency == 0:
             utils.soft_update_params(self.critic, self.critic_target, self.critic_tau)
 
-    def prepare_state(self, latest_scan, distance, cos, sin, collision, goal, action):
+    def prepare_state(self, latest_scan, odom, collision, action):
         # update the returned data from ROS into a form used for learning in the current model
         latest_scan = np.array(latest_scan)
 
@@ -294,9 +294,10 @@ class SAC(object):
             min_values.append(min(bin))
 
         # len(min_values) is 20
-        state = min_values + [distance, cos, sin] + [action[0], action[1]]
+        state = min_values + [odom.x , odom.y] + [action[0], action[1]]
 
+        print(len(state), self.state_dim)
         assert len(state) == self.state_dim
-        terminal = 1 if collision or goal else 0
+        terminal = 1 if collision else 0
 
         return state, terminal

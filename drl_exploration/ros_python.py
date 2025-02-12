@@ -80,17 +80,17 @@ class ROS_env:
             # print(e)
             pass
 
-        distance, cos, sin, _ = self.get_dist_sincos(
-            latest_position, latest_orientation
-        )
+        # distance, cos, sin, _ = self.get_dist_sincos(
+        #     latest_position, latest_orientation
+        # )
         collision = self.check_collision(latest_scan)
-        goal = self.check_target(distance, collision)
+        # goal = self.check_target(distance, collision)
         action = [lin_velocity, ang_velocity]
         _ = self.sensor_subscriber.get_map_free_pixels()
         difference_map_value = self.sensor_subscriber.map_value - self.sensor_subscriber.previous_map_value 
-        reward = self.get_reward(goal, collision, action, latest_scan, difference_map_value)
+        reward = self.get_reward(collision, action, latest_scan, difference_map_value)
 
-        return latest_map, latest_scan, distance, cos, sin, collision, goal, action, reward, free_pixels
+        return latest_map, latest_scan, latest_position, collision, action, reward, free_pixels
 
     def reset(self, is_transform_available):
         self.world_reset.reset_world()
@@ -109,44 +109,14 @@ class ROS_env:
 
         self.publish_target.publish(self.target[0], self.target[1])
 
-        latest_map, latest_scan, distance, cos, sin, _, _, action, reward, free_pixels= self.step(
+        latest_map, latest_scan, latest_position, collision, action, reward, free_pixels= self.step(
             is_transform_available, lin_velocity=action[0], ang_velocity=action[1]
         )
         
-
         self.slam_handler.stop()
-        self.slam_handler.start()
-        # self.sensor_subscriber.reset_time()
-        # self.empty_map_publisher.restart_ros2_node("/cartographer_node", "cartographer_ros", "cartographer_node")
-        # self.empty_map_publisher.publish_empty_map()
-        # resetting of map
-        # service_name = "/finish_trajectory"
-        # service_client = self.sensor_subscriber.create_client(FinishTrajectory, service_name)
-        # if not service_client.wait_for_service(timeout_sec=10.0):
-        #     print(f"Service {service_name} not available. Exiting.")
-        # else:
-        #     request = FinishTrajectory.Request()
-        #     future = service_client.call_async(request)
-        #     rclpy.spin_until_future_complete(self.sensor_subscriber, future)
+        self.slam_handler.start()            
 
-            # if future.result() is not None:
-            #     print("Costmap cleared successfully.")
-            #     service_name = "/start_trajectory"
-            #     service_client = self.sensor_subscriber.create_client(StartTrajectory, service_name)
-            #     if not service_client.wait_for_service(timeout_sec=10.0):
-            #         print(f"Service {service_name} not available. Exiting.")
-            #     else:
-            #         if future.result() is not None:
-            #             print("Costmap started successfully.")
-            #         else:
-            #             print(f"Failed to start costmap: {future.exception()}.")
-
-            # else:
-            #     print(f"Failed to clear costmap: {future.exception()}.")
-
-            
-
-        return latest_map, latest_scan, distance, cos, sin, False, False, action, reward, free_pixels
+        return latest_map, latest_scan, latest_position, False, False, action, reward, free_pixels
 
     def eval(self, scenario):
         self.cmd_vel_publisher.publish_cmd_vel(0.0, 0.0)
@@ -159,10 +129,10 @@ class ROS_env:
 
         self.physics_client.unpause_physics()
         time.sleep(1)
-        latest_map, latest_scan, distance, cos, sin, _, _, a, reward, free_pixel = self.step(
+        latest_map, latest_scan, latest_position, collision, action, reward, free_pixels = self.step(
             True, lin_velocity=0.0, ang_velocity=0.0
         )
-        return latest_map, latest_scan, distance, cos, sin, False, False, a, reward
+        return latest_map, latest_scan, latest_position, False, False, action, reward
 
     def set_target_position(self, robot_position):
         pos = False
@@ -268,15 +238,13 @@ class ROS_env:
         return distance, cos, sin, angle
 
     @staticmethod
-    def get_reward(goal, collision, action, laser_scan, map_value_gain):
-        if goal:
-            return 100.0
-        elif collision:
+    def get_reward(collision, action, laser_scan, map_value_gain):
+        map_scaling_factor = 0.2
+        if collision:
             return -100.0
         else:
             r3 = lambda x: 1.35 - x if x < 1.35 else 0.0
-            
-            return action[0] - abs(action[1]) / 2 - r3(min(laser_scan)) / 2 + map_value_gain
+            return action[0] - abs(action[1]) / 2 - r3(min(laser_scan)) / 2 + map_value_gain* map_scaling_factor
 
     @staticmethod
     def cossin(vec1, vec2):

@@ -29,7 +29,7 @@ def main(args=None):
     """Main training function"""
     action_dim = 2  # number of actions produced by the model
     max_action = 1  # maximum absolute value of output actions
-    state_dim = 25  # number of input values in the neural network (vector length of state input)
+    state_dim = 24  # number of input values in the neural network (vector length of state input)
     device = torch.device(
         "cuda" if torch.cuda.is_available() else "cpu"
     )  # using cuda if it is available, cpu otherwise
@@ -90,7 +90,7 @@ def main(args=None):
         replay_buffer = ReplayBuffer(
             buffer_size=5e3, random_seed=42
         )  # if not experiences are loaded, instantiate an empty buffer
-    latest_map, latest_scan, distance, cos, sin, collision, goal, a, reward, free_pixels = ros.step(
+    latest_map, latest_scan, robot_odom, collision, a, reward, free_pixels = ros.step(
         is_transform_available, lin_velocity=0.0, ang_velocity=0.0
     )  # get the initial step state
 
@@ -99,7 +99,7 @@ def main(args=None):
         # is_transform_available = check_frame_availability(tf_buffer)
         print(Fore.GREEN+  f"step: {steps}  |  episode: {episode}  |  epoch: {epoch}  |  Map value: {free_pixels}"+ Style.RESET_ALL)
         state, terminal = model.prepare_state(
-            latest_scan, distance, cos, sin, collision, goal, a
+            latest_scan, robot_odom, collision, a
         )  # get state a state representation from returned data from the environment
         
         action = model.get_action(latest_map, state, True)  # get an action from the model
@@ -112,11 +112,11 @@ def main(args=None):
         ]  # clip linear velocity to [0, 0.5] m/s range
 
         map = latest_map
-        latest_map, latest_scan, distance, cos, sin, collision, goal, a, reward, free_pixels = ros.step(
+        latest_map, latest_scan, robot_odom, collision, a, reward, free_pixels = ros.step(
             is_transform_available, lin_velocity=a_in[0], ang_velocity=a_in[1]
         )  # get data from the environment
         next_state, terminal = model.prepare_state(
-            latest_scan, distance, cos, sin, collision, goal, a
+            latest_scan, robot_odom, collision, a
         )  # get a next state representation
         replay_buffer.add(
             map, state, action, reward, terminal, latest_map, next_state
@@ -127,7 +127,7 @@ def main(args=None):
         ):  # reset environment of terminal stat ereached, or max_steps were taken
             print("terminal state reached")
             latest_scan = latest_map = None
-            latest_map, latest_scan, distance, cos, sin, collision, goal, a, reward, free_pixels = ros.reset(is_transform_available)
+            latest_map, latest_scan, robot_odom, collision, a, reward, free_pixels = ros.reset(is_transform_available)
             episode += 1
             if episode % train_every_n == 0:
                 print(Fore.BLUE+ "training the model"+ Style.RESET_ALL)
@@ -166,18 +166,18 @@ def eval(model, env, scenarios, epoch, max_steps):
     gl = 0
     for scenario in scenarios:
         count = 0
-        latest_map, latest_scan, distance, cos, sin, collision, goal, a, reward = env.eval(
+        latest_map, latest_scan, robot_odom, collision, goal, a, reward = env.eval(
             scenario=scenario
         )
         while count < max_steps:
             state, terminal = model.prepare_state(
-                latest_scan, distance, cos, sin, collision, goal, a
+                latest_scan, robot_odom, collision, a
             )
             if terminal:
                 break
             action = model.get_action(latest_map, state, False)
             a_in = [(action[0] + 1) / 2, action[1]]
-            latest_map, latest_scan, distance, cos, sin, collision, goal, a, reward, free_pixels= env.step(
+            latest_map, latest_scan, latest_position, collision, action, reward, free_pixels= env.step(
                 True, lin_velocity=a_in[0], ang_velocity=a_in[1]
             )
             avg_reward += reward
