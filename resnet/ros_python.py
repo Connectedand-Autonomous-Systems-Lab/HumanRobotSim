@@ -63,7 +63,6 @@ class ROS_env:
         rclpy.spin_once(self.sensor_subscriber)
         
         self.physics_client.pause_physics()
-
         (
             latest_map,
             latest_scan,
@@ -71,7 +70,6 @@ class ROS_env:
             latest_orientation,
             free_pixels,
         ) = self.sensor_subscriber.get_latest_sensor(is_tf_available)
-
         try :
             while latest_map == None or latest_scan == None:
                 print(Fore.RED + "Map or Scan not available" + Style.RESET_ALL)
@@ -127,8 +125,6 @@ class ROS_env:
         )
         
         return latest_map, latest_scan, latest_position, False, action, reward, free_pixels
-
-    
 
     def eval(self, scenario):
         self.cmd_vel_publisher.publish_cmd_vel(0.0, 0.0)

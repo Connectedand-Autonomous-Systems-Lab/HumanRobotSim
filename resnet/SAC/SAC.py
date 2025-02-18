@@ -9,6 +9,7 @@ from SAC.SAC_critic import DoubleQCritic as critic_model
 from SAC.SAC_actor import DiagGaussianActor as actor_model
 from torch.utils.tensorboard import SummaryWriter
 from colorama import Fore, Style
+from torchvision import models, transforms
 
 class SAC(object):
     """SAC algorithm."""
@@ -153,18 +154,32 @@ class SAC(object):
     def alpha(self):
         return self.log_alpha.exp()
 
+    def grayscale_to_rgb(self, image: np.ndarray) -> np.ndarray:
+        """
+        Converts a grayscale image (H x W) or (H x W x 1) to an RGB image (H x W x 3).
+        """
+        if image.ndim == 2:  # shape: (H, W)
+            image = np.stack([image]*3, axis=-1)
+        elif image.ndim == 3 and image.shape[2] == 1:  # shape: (H, W, 1)
+            image = np.concatenate([image]*3, axis=2)
+        return image
+
     def prepare_map(self, image):
-        # Assuming `image` is a NumPy array (e.g., dtype=uint8)
-        image_tensor = torch.tensor(image, dtype=torch.float32).to(self.device)  # Convert to float tensor
-        image_tensor /= 255.0  # Normalize if the image is in [0, 255] range
 
-        # Add batch and channel dimensions if not already present
-        if len(image_tensor.shape) == 3:  # If shape is (H, W, C)
-            image_tensor = image_tensor.permute(2, 0, 1).unsqueeze(0)  # Convert to (1, C, H, W)
-        elif len(image_tensor.shape) == 2:  # If shape is (H, W)
-            image_tensor = image_tensor.unsqueeze(0).unsqueeze(0)  # Convert to (1, 1, H, W)
+        # Data transformation
+        transform = transforms.Compose([
+        transforms.Lambda(self.grayscale_to_rgb), 
+        transforms.ToPILImage(),
+        transforms.Resize(256),
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                            std=[0.229, 0.224, 0.225])
+        ])
 
-        return image_tensor
+        img = transform(image).unsqueeze(0).to(self.device)
+
+        return img
 
     def get_action(self, image, obs, add_noise):
         if add_noise:

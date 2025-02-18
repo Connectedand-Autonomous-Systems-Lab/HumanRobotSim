@@ -35,11 +35,11 @@ def main(args=None):
     )  # using cuda if it is available, cpu otherwise
 
     # Resource saving parameters
-    nr_eval_episodes = 10  # how many episodes to use to run evaluation
+    nr_eval_episodes = 4  # how many episodes to use to run evaluation
     max_epochs = 100  # max number of epochs
-    episodes_per_epoch = 70 # how many episodes to run in single epoch
+    episodes_per_epoch = 5 # how many episodes to run in single epoch
     train_every_n = 5  # train and update network parameters every n episodes
-    training_iterations = 10  # how many batches to use for single training cycle
+    training_iterations = 2  # how many batches to use for single training cycle
 
     epoch = 0  # starting epoch number
     episode = 0  # starting episode number
@@ -103,7 +103,6 @@ def main(args=None):
         state, terminal = model.prepare_state(
             latest_scan, robot_odom, collision, a
         )  # get state a state representation from returned data from the environment
-        
         action = model.get_action(latest_map, state, True)  # get an action from the model
         action = (action + np.random.normal(0, 0.2, size=action_dim)).clip(
             -max_action, max_action

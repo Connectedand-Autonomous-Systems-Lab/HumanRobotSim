@@ -92,7 +92,8 @@ class SensorSubscriber(Node):
             return latest_map, self.latest_scan, self.latest_position, self.latest_heading, self.get_map_free_pixels()
         # while self.latest_map == None:
         #     continue
-        return self.map_show(is_transform_available, True), self.latest_scan, self.latest_position, self.latest_heading, self.get_map_free_pixels()
+
+        return self.map_show(is_transform_available, False), self.latest_scan, self.latest_position, self.latest_heading, self.get_map_free_pixels()
 
     def get_map_free_pixels(self):
         self.previous_map_value = self.map_value
