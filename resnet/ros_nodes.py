@@ -93,7 +93,7 @@ class SensorSubscriber(Node):
         # while self.latest_map == None:
         #     continue
 
-        return self.map_show(is_transform_available, False), self.latest_scan, self.latest_position, self.latest_heading, self.get_map_free_pixels()
+        return self.map_show(is_transform_available, True), self.latest_scan, self.latest_position, self.latest_heading, self.get_map_free_pixels()
 
     def get_map_free_pixels(self):
         self.previous_map_value = self.map_value
@@ -152,11 +152,13 @@ class SensorSubscriber(Node):
         # fixed_size_image = self.fix_sizes(cv_image)
         
         if self.transform == None:
+            print("No transform!")
             pass
         else:
             robot_position = self.get_robot_position_on_map(origin)
             try:
-                cv2.circle(cv_image,robot_position,2,(255),-1)
+                cv2.circle(cv_image, robot_position, 2, (255, 255, 255), -1)  # Filled circle
+                cv2.circle(cv_image, robot_position, 2, (0, 0, 0), 1)  # Outline with thickness 1
             except: 
                 print(Fore.RED + f'Invalid Robot position!!!!!' + Style.RESET_ALL)
         cv_image = np.fliplr(cv_image)  # Flip vertically

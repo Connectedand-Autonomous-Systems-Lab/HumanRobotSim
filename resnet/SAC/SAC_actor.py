@@ -76,10 +76,10 @@ class DiagGaussianActor(nn.Module):
         # Check the shape -- this happens in training
         if len(resnet_prepared_image.shape) == 3 and resnet_prepared_image.shape[0] == 40:  # Detect shape [40, 512, 512]
             # Convert to [40, 1, 512, 512]
-            image = image.unsqueeze(1)
+            resnet_prepared_image = resnet_prepared_image.unsqueeze(1)
 
         # print(resnet_prepared_image.shape)
-        image_features = self.resnet50(resnet_prepared_image)  # Shape: (batch_size, 32, img_height/4, img_width/4)
+        image_features = self.resnet50(resnet_prepared_image)  
         image_features = image_features.view(image_features.size(0), -1)  # Flatten CNN output
         # print(image_features.shape) # 2048
         # Concatenate image features with array input

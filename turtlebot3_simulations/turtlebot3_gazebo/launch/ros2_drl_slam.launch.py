@@ -70,7 +70,7 @@ def generate_launch_description():
                 executable="rviz2",
                 name="rviz2",
                 output="log",
-                arguments=["-d", "/home/mayooran/Documents/DRL-Robot-Navigation-ROS2/src/drl_exploration/turtlebot3_simulations/turtlebot3_gazebo/rviz/rviz.rviz",'--ros-args', '--log-level', 'fatal'],
+                arguments=["-d", "/home/mayooran/Documents/iros/src/DRL-exploration/turtlebot3_simulations/turtlebot3_gazebo/rviz/slam.rviz",'--ros-args', '--log-level', 'fatal'],
                 parameters=[{"use_sim_time": use_sim_time}],
             ),
 

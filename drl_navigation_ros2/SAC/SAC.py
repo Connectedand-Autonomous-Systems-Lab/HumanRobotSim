@@ -34,9 +34,9 @@ class SAC(object):
         save_every=0,
         load_model=False,
         log_dist_and_hist = False,
-        save_directory=Path("src/drl_navigation_ros2/models/SAC"),
+        save_directory=Path("src/DRL-exploration/drl_navigation_ros2/models/SAC"),
         model_name="SAC",
-        load_directory=Path("src/drl_navigation_ros2/models/SAC"),
+        load_directory=Path("src/DRL-exploration/drl_navigation_ros2/models/old2"),
     ):
         super().__init__()
 

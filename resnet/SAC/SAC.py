@@ -158,6 +158,7 @@ class SAC(object):
         """
         Converts a grayscale image (H x W) or (H x W x 1) to an RGB image (H x W x 3).
         """
+        # print(image.shape)
         if image.ndim == 2:  # shape: (H, W)
             image = np.stack([image]*3, axis=-1)
         elif image.ndim == 3 and image.shape[2] == 1:  # shape: (H, W, 1)
@@ -180,6 +181,26 @@ class SAC(object):
         img = transform(image).unsqueeze(0).to(self.device)
 
         return img
+    
+    def prepare_batched_map(self, batch_images):
+        # Data transformation
+        transform = transforms.Compose([
+            transforms.Lambda(self.grayscale_to_rgb), 
+            transforms.ToPILImage(),
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                std=[0.229, 0.224, 0.225])
+        ])
+
+        # Apply transformation to each image in the batch
+        transformed_images = [transform(image).unsqueeze(0) for image in batch_images]
+
+        # Stack the images into a single tensor (shape: [batch_size, 3, 224, 224])
+        batch_tensor = torch.cat(transformed_images, dim=0).to(self.device)
+
+        return batch_tensor
 
     def get_action(self, image, obs, add_noise):
         if add_noise:
@@ -201,6 +222,8 @@ class SAC(object):
         return utils.to_np(action[0])
 
     def update_critic(self, image, obs, action, reward, next_image, next_obs, done, step):
+        image = self.prepare_batched_map(image)
+        next_image = self.prepare_batched_map(next_image)
         dist = self.actor(next_image, next_obs)
         next_action = dist.rsample()
         log_prob = dist.log_prob(next_action).sum(-1, keepdim=True)
@@ -225,6 +248,7 @@ class SAC(object):
             self.critic.log(self.writer, step)
 
     def update_actor_and_alpha(self, image, obs, step):
+        image = self.prepare_batched_map(image)
         dist = self.actor(image, obs)
         action = dist.rsample()
         log_prob = dist.log_prob(action).sum(-1, keepdim=True)
@@ -269,9 +293,9 @@ class SAC(object):
             batch_next_states,
         ) = replay_buffer.sample_batch(batch_size)
 
-        image = torch.Tensor(batch_images).to(self.device)
+        # image = torch.Tensor(batch_images).to(self.device)
         state = torch.Tensor(batch_states).to(self.device)
-        next_image = torch.Tensor(batch_next_images).to(self.device)
+        # next_image = torch.Tensor(batch_next_images).to(self.device)
         next_state = torch.Tensor(batch_next_states).to(self.device)
         action = torch.Tensor(batch_actions).to(self.device)
         reward = torch.Tensor(batch_rewards).to(self.device)
@@ -279,10 +303,10 @@ class SAC(object):
         self.train_metrics_dict["train/batch_reward_av"].append(batch_rewards.mean().item())
         self.writer.add_scalar("train/batch_reward", batch_rewards.mean(), step)
 
-        self.update_critic(image, state, action, reward, next_image, next_state, done, step)
+        self.update_critic(batch_images, state, action, reward, batch_next_images, next_state, done, step)
 
         if step % self.actor_update_frequency == 0:
-            self.update_actor_and_alpha(image, state, step)
+            self.update_actor_and_alpha(batch_images, state, step)
 
         if step % self.critic_target_update_frequency == 0:
             utils.soft_update_params(self.critic, self.critic_target, self.critic_tau)

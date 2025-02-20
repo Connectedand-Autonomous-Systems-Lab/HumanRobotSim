@@ -35,13 +35,14 @@ def main(args=None):
     )
     save_every = 100  # save the model every n training cycles
 
+    print(f"training using {device}")
     model = SAC(
         state_dim=state_dim,
         action_dim=action_dim,
         max_action=max_action,
         device=device,
         save_every=save_every,
-        load_model=False,
+        load_model=True,
     )  # instantiate a model
 
     ros = ROS_env()  # instantiate ROS environment
