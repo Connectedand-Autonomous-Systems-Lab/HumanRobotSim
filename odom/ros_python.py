@@ -19,6 +19,7 @@ from squaternion import Quaternion
 from std_srvs.srv import Empty
 from cartographer_ros_msgs.srv import FinishTrajectory, StartTrajectory
 from colorama import Fore, Style
+from collections import deque
 
 class ROS_env:
     def __init__(
@@ -53,9 +54,17 @@ class ROS_env:
         self.max_target_dist = max_target_dist
         self.target_reached_delta = target_reached_delta
         self.collision_delta = collision_delta
-        self.max_reward_in_history = 5000
+        
         self.target = self.set_target_position([0.0, 0.0])
         self.slam_handler.start()
+        
+        # Rewards and Penalties
+        self.max_reward_in_history = 5000
+        self.max_map_exploration_reward = 20
+        self.max_idling_penalty = 10
+        self.robot_position_buffer_size = 20
+        self.robot_position_idle_penalty_threshold = 0.1
+        self.robot_position_buffer = deque()
 
     def step(self, is_tf_available, lin_velocity=0.0, ang_velocity=0.1):
         self.cmd_vel_publisher.publish_cmd_vel(lin_velocity, ang_velocity)
@@ -78,11 +87,8 @@ class ROS_env:
             # print(e)
             pass
 
-        # distance, cos, sin, _ = self.get_dist_sincos(
-        #     latest_position, latest_orientation
-        # )
+        self.append_to_robot_position_buffer(latest_position)
         collision = self.check_collision(latest_scan)
-        # goal = self.check_target(distance, collision)
         action = [lin_velocity, ang_velocity]
         difference_map_value = self.sensor_subscriber.map_value - self.sensor_subscriber.previous_map_value 
         reward = self.get_reward(collision, action, latest_scan, difference_map_value)
@@ -117,7 +123,7 @@ class ROS_env:
                 break
             rclpy.spin_once(self.sensor_subscriber)
             time.sleep(0.5)
-        time.sleep(1)
+        time.sleep(3)
         self.physics_client.pause_physics()
 
         latest_scan, latest_position, collision, action, reward, free_pixels= self.step(
@@ -142,6 +148,13 @@ class ROS_env:
         )
         return latest_scan, latest_position, False, False, action, reward
 
+    def append_to_robot_position_buffer(self, current_position):
+        if len(self.robot_position_buffer)<=self.robot_position_buffer_size:
+            self.robot_position_buffer.append([current_position.x,current_position.y])
+        else:
+            self.robot_position_buffer.popleft()
+            self.robot_position_buffer.append([current_position.x,current_position.y])
+            
     def set_target_position(self, robot_position):
         pos = False
         while not pos:
@@ -248,20 +261,31 @@ class ROS_env:
     def get_reward(self, collision, action, laser_scan, map_value_gain):
 
         def map_scale(map_value_gain):
-            max_reward = 20
             if map_value_gain>self.max_reward_in_history:
                 self.max_reward_in_history=map_value_gain
 
-            scaled_map_value_gain = max_reward*map_value_gain/ self.max_reward_in_history
+            scaled_map_value_gain = self.max_map_exploration_reward*map_value_gain/ self.max_reward_in_history
             scaled_map_value_gain = max(0, scaled_map_value_gain)
             return scaled_map_value_gain
         
+        def avoid_idle():
+            # print(self.robot_position_buffer)
+            std_position_x = np.std(np.array(self.robot_position_buffer)[:,0])
+            std_position_y = np.std(np.array(self.robot_position_buffer)[:,1])
+            motion_speed = std_position_x + std_position_y
+            if motion_speed < self.robot_position_idle_penalty_threshold:
+                idling_penalty = (self.robot_position_idle_penalty_threshold - motion_speed)*self.max_idling_penalty
+                print(f"Idling penalty : {idling_penalty}")
+                return idling_penalty
+            else: return 0
+
         if collision:
             return -100.0
         else:
             r3 = lambda x: 1.35 - x if x < 1.35 else 0.0
-            print(map_scale(map_value_gain))
-            return action[0] - abs(action[1]) / 2 - r3(min(laser_scan)) / 2 + map_scale(map_value_gain)
+            # print(map_scale(map_value_gain))
+            idling_penlaty = avoid_idle()
+            return action[0] - abs(action[1]) / 2 - r3(min(laser_scan)) / 2 + map_scale(map_value_gain) - idling_penlaty
 
     @staticmethod
     def cossin(vec1, vec2):

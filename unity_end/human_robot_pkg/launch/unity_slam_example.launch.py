@@ -20,7 +20,7 @@ def generate_launch_description():
         package='rviz2',
         executable='rviz2',
         output='screen',
-        arguments=['-d', '/home/mayooran/Documents/human_robot_exploration_ws/src/human_robot_pkg/rviz/human_robot.rviz'],
+        arguments=['-d', 'src/DRL-exploration/unity_end/human_robot_pkg/rviz/human_robot.rviz'],
         parameters=[{'use_sim_time':True}]
     )
 

@@ -43,14 +43,14 @@ def main(args=None):
     epoch = 0  # starting epoch number
     episode = 0  # starting episode number
     batch_size = 40  # batch size for each training iteration
-    max_steps = 300  # maximum number of steps in single episode
+    max_steps = 2000  # maximum number of steps in single episode
     steps = 0  # starting step number
     load_saved_buffer = False  # whether to load experiences from assets/data.yml
     pretrain = False # whether to use the loaded experiences to pre-train the model (load_saved_buffer must be True)
     pretraining_iterations = (
         50  # number of training iterations to run during pre-training
     )
-    save_every = 100  # save the model every n training cycles
+    save_every = 10  # save the model every n training cycles
 
     is_transform_available = True
     
@@ -60,7 +60,7 @@ def main(args=None):
         max_action=max_action,
         device=device,
         save_every=save_every,
-        load_model=False,
+        load_model=True,
     )  # instantiate a model
 
     ros = ROS_env()  # instantiate ROS environment

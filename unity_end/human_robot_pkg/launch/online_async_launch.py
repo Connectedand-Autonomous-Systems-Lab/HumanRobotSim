@@ -17,7 +17,7 @@ def generate_launch_description():
         description='Use simulation/Gazebo clock')
     declare_slam_params_file_cmd = DeclareLaunchArgument(
         'slam_params_file',
-        default_value=['/home/mayooran/Documents/human_robot_exploration_ws/src/human_robot_pkg/config/' , LaunchConfiguration('namespace'), '.yaml'],
+        default_value=['src/DRL-exploration/unity_end/human_robot_pkg/config/' , LaunchConfiguration('namespace'), '.yaml'],
         description='Full path to the ROS2 parameters file to use for the slam_toolbox node')
 
     start_async_slam_toolbox_node = Node(

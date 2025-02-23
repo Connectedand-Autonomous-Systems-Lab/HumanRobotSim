@@ -35,9 +35,9 @@ class SAC(object):
         save_every=0,
         load_model=False,
         log_dist_and_hist = False,
-        save_directory=Path("src/drl_navigation_ros2/models/SAC"),
+        save_directory=Path("src/DRL-exploration/odom/models/SAC"),
         model_name="SAC",
-        load_directory=Path("src/drl_navigation_ros2/models/SAC"),
+        load_directory=Path("src/DRL-exploration/odom/models/SAC"),
     ):
         super().__init__()
 
@@ -121,6 +121,7 @@ class SAC(object):
             self.critic_target.state_dict(),
             "%s/%s_critic_target.pth" % (directory, filename),
         )
+        print(f"saved weights to {directory}")
 
     def load(self, filename, directory):
         self.actor.load_state_dict(
