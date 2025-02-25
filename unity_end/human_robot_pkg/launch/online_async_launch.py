@@ -1,5 +1,5 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, ExecuteProcess, GroupAction
+from launch.actions import DeclareLaunchArgument, ExecuteProcess, GroupAction, LogInfo
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node, PushRosNamespace
 from ament_index_python.packages import get_package_share_directory
@@ -27,7 +27,9 @@ def generate_launch_description():
           {'odom_frame': [LaunchConfiguration('namespace'), '/odom' ]},
           {'base_frame': [LaunchConfiguration('namespace'), '/base_footprint']},
           {'map_frame': [LaunchConfiguration('namespace'), '/map']},
-          {'scan_topic': ['/', LaunchConfiguration('namespace'), '/scan']}
+          {'scan_topic': ['/', LaunchConfiguration('namespace'), '/scan']},
+          {'max_laser_range': 7.0},
+          {'min_laser_range': 0.1},
         ],
         package='slam_toolbox',
         executable='async_slam_toolbox_node',

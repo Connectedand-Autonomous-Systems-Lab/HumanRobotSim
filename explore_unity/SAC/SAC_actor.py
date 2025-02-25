@@ -70,22 +70,26 @@ class DiagGaussianActor(nn.Module):
         self.apply(utils.weight_init)
 
     def forward(self, obs):
-        
+
         # print(obs)
-        print(obs.max(), obs.min())
+        # print(obs.max(), obs.min())
         mu, log_std = self.trunk(obs).chunk(2, dim=-1)
         # print(torch.isnan(log_std).any(), torch.isinf(log_std).any())
-        print(log_std.max(), log_std.min())
+        # print(log_std.max(), log_std.min())
         # constrain log_std inside [log_std_min, log_std_max]
         log_std = torch.tanh(log_std)
         log_std_min, log_std_max = self.log_std_bounds
         log_std = log_std_min + 0.5 * (log_std_max - log_std_min) * (log_std + 1)
 
+        # print(torch.isnan(log_std).any(), torch.isinf(log_std).any())
+        # print(log_std.max(), log_std.min())
         std = log_std.exp()
 
         self.outputs["mu"] = mu
         self.outputs["std"] = std
 
+        # print(torch.isnan(std))
+        # print("actor is passed")
         dist = SquashedNormal(mu, std)
         return dist
 

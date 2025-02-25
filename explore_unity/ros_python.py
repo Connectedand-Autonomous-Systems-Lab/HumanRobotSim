@@ -4,13 +4,10 @@ from ros_nodes import (
     ScanSubscriber,
     OdomSubscriber,
     ResetWorldClient,
-    SetModelStateClient,
     CmdVelPublisher,
-    MarkerPublisher,
     PhysicsClient,
     SensorSubscriber,
     MapSubscriber,
-    EmptyMapPublisher,
     SlamHandler,
 )
 import numpy as np
@@ -20,6 +17,7 @@ from std_srvs.srv import Empty
 from cartographer_ros_msgs.srv import FinishTrajectory, StartTrajectory
 from colorama import Fore, Style
 from collections import deque
+import math
 
 class ROS_env:
     def __init__(
@@ -33,12 +31,12 @@ class ROS_env:
     ):
         rclpy.init(args=args)
         self.cmd_vel_publisher = CmdVelPublisher()
-        self.scan_subscriber = ScanSubscriber()
-        self.odom_subscriber = OdomSubscriber()
-        self.robot_state_publisher = SetModelStateClient()
+        # self.scan_subscriber = ScanSubscriber()
+        # self.odom_subscriber = OdomSubscriber()
+        # self.robot_state_publisher = SetModelStateClient()
         self.world_reset = ResetWorldClient()
         self.physics_client = PhysicsClient()
-        self.publish_target = MarkerPublisher()
+        # self.publish_target = MarkerPublisher()
         self.map_subscriber = MapSubscriber()
         self.element_positions = [
             [-2.93, 3.17],
@@ -47,7 +45,6 @@ class ROS_env:
             [2.83, 2.93],
         ]
         self.sensor_subscriber = SensorSubscriber()
-        # self.empty_map_publisher = EmptyMapPublisher()
         self.slam_handler = SlamHandler()
         self.target_dist = init_target_distance
         self.target_dist_increase = target_dist_increase
@@ -73,6 +70,7 @@ class ROS_env:
         rclpy.spin_once(self.sensor_subscriber)
         
         self.physics_client.pause_physics()
+
         (
             latest_scan,
             latest_position,
@@ -108,9 +106,9 @@ class ROS_env:
             [-2.77, -0.96],
             [2.83, 2.93],
         ]
-        self.set_positions()
+        # self.set_positions()
 
-        self.publish_target.publish(self.target[0], self.target[1])
+        # self.publish_target.publish(self.target[0], self.target[1])
 
         self.slam_handler.stop()
         self.slam_handler.start()    
@@ -118,6 +116,7 @@ class ROS_env:
 
         self.physics_client.unpause_physics()
         rclpy.spin_once(self.sensor_subscriber)
+        print("Waiting after reset")
         time.sleep(3)
         self.physics_client.pause_physics()
 
@@ -168,48 +167,6 @@ class ROS_env:
             pos = self.check_position(x, y, 1.2)
         self.element_positions.append([x, y])
         return [x, y]
-
-    def set_random_position(self, name):
-        angle = np.random.uniform(-np.pi, np.pi)
-        pos = False
-        while not pos:
-            x = np.random.uniform(-4.0, 4.0)
-            y = np.random.uniform(-4.0, 4.0)
-            pos = self.check_position(x, y, 1.8)
-        self.element_positions.append([x, y])
-        self.set_position(name, x, y, angle)
-
-    def set_robot_position(self):
-        angle = np.random.uniform(-np.pi, np.pi)
-        pos = False
-        while not pos:
-            x = np.random.uniform(-4.0, 4.0)
-            y = np.random.uniform(-4.0, 4.0)
-            pos = self.check_position(x, y, 1.8)
-        self.set_position("turtlebot3_waffle", x, y, angle)
-        return x, y
-
-    def set_position(self, name, x, y, angle):
-        quaternion = Quaternion.from_euler(0.0, 0.0, angle)
-        pose = Pose()
-        pose.position.x = x
-        pose.position.y = y
-        pose.position.z = 0.0
-        pose.orientation.x = quaternion.x
-        pose.orientation.y = quaternion.y
-        pose.orientation.z = quaternion.z
-        pose.orientation.w = quaternion.w
-
-        self.robot_state_publisher.set_state(name, pose)
-        rclpy.spin_once(self.robot_state_publisher)
-
-    def set_positions(self):
-        for i in range(4, 8):
-            name = "obstacle" + str(i + 1)
-            self.set_random_position(name)
-
-        robot_position = self.set_robot_position()
-        self.target = self.set_target_position(robot_position)
 
     def check_position(self, x, y, min_dist):
         pos = True
@@ -270,7 +227,7 @@ class ROS_env:
             motion_speed = std_position_x + std_position_y
             if motion_speed < self.robot_position_idle_penalty_threshold:
                 idling_penalty = (self.robot_position_idle_penalty_threshold - motion_speed)*self.max_idling_penalty
-                print(f"Idling penalty : {idling_penalty}")
+                # print(f"Idling penalty : {idling_penalty}")
                 return idling_penalty
             else: return 0
 
@@ -280,7 +237,9 @@ class ROS_env:
             r3 = lambda x: 1.35 - x if x < 1.35 else 0.0
             # print(map_scale(map_value_gain))
             idling_penlaty = avoid_idle()
-            return action[0] - abs(action[1]) / 2 - r3(min(laser_scan)) / 2 + map_scale(map_value_gain) - idling_penlaty
+            totol_reward = action[0] - abs(action[1]) / 2 - r3(min(laser_scan)) / 2 + map_scale(map_value_gain) - idling_penlaty
+            # print(math.isnan(totol_reward))
+            return totol_reward
 
     @staticmethod
     def cossin(vec1, vec2):
