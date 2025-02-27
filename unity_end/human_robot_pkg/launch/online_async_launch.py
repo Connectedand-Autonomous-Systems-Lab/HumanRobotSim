@@ -30,6 +30,7 @@ def generate_launch_description():
           {'scan_topic': ['/', LaunchConfiguration('namespace'), '/scan']},
           {'max_laser_range': 7.0},
           {'min_laser_range': 0.1},
+          {'map_update_interval': 0.05},
         ],
         package='slam_toolbox',
         executable='async_slam_toolbox_node',

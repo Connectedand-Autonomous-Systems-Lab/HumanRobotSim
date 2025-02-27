@@ -277,12 +277,19 @@ class SlamHandler:
             }.items()
         )
 
+        self.ros_tcp_connector = IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                os.path.join(get_package_share_directory('human_robot_pkg'), 'launch', 'unity_slam_example.launch.py')
+            ),
+            launch_arguments={
+                'use_sim_time': 'true'
+            }.items()
+        )
+
         return LaunchDescription([
-            DeclareLaunchArgument(
-                'use_sim_time',
-                default_value='true',
-                description='Use simulation (Gazebo) clock if true'),
-                self.slam_toolbox_tb3_0
+            DeclareLaunchArgument('use_sim_time',default_value='true',description='Use simulation (Gazebo) clock if true'),
+            self.slam_toolbox_tb3_0,
+            self.ros_tcp_connector
         ])
 
     def _run_process(self, stop_event, launch_description):

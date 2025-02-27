@@ -14,15 +14,20 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(
             os.path.join(get_package_share_directory('ros_tcp_endpoint'), 'launch', 'endpoint.py')
         ),
+        launch_arguments={
+            'use_sim_time': 'true'
+        }.items()
     )
 
     rviz2 = Node(
         package='rviz2',
         executable='rviz2',
         output='screen',
-        arguments=['-d', 'src/DRL-exploration/unity_end/human_robot_pkg/rviz/human_robot.rviz'],
+        arguments=['-d', 'src/DRL-exploration/unity_end/human_robot_pkg/rviz/human_robot.rviz', '--ros-args', '--log-level', 'fatal'],
         parameters=[{'use_sim_time':True}]
     )
+
+    # ros2 run rviz2 rviz2 -d src/DRL-exploration/unity_end/human_robot_pkg/rviz/human_robot.rviz
 
     nav2_bringup = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(

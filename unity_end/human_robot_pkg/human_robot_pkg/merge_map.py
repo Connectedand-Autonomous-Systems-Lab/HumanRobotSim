@@ -31,12 +31,12 @@ class MapMerger(Node):
         self.map2 = None
 
     def map1_callback(self, msg):
-        self.get_logger().info('Received human map')
+        # self.get_logger().info('Received human map')
         self.map1 = msg
         self.try_merge_maps()
 
     def map2_callback(self, msg):
-        self.get_logger().info('Received tb3_0 map')
+        # self.get_logger().info('Received tb3_0 map')
         self.map2 = msg
         self.try_merge_maps()
 
@@ -87,7 +87,7 @@ class MapMerger(Node):
                 # Create merged OccupancyGrid message
                 merged_map = OccupancyGrid()
                 merged_map.header.stamp = self.get_clock().now().to_msg()
-                merged_map.header.frame_id = self.map1.header.frame_id
+                merged_map.header.frame_id = "map"
                 merged_map.info.resolution = resolution
                 merged_map.info.width = merged_width
                 merged_map.info.height = merged_height
@@ -99,7 +99,7 @@ class MapMerger(Node):
 
                 merged_map.data = merged_data.flatten().tolist()
                 self.pub_merged_map.publish(merged_map)
-                self.get_logger().info('Published merged map.')
+                # self.get_logger().info('Published merged map.')
             else:
                 self.get_logger().warn('Maps have different resolutions.')
 

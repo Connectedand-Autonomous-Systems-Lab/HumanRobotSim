@@ -27,7 +27,7 @@ def check_frame_availability(tf_buffer):
 def main(args=None):
     """Main training function"""
     action_dim = 2  # number of actions produced by the model
-    max_action = 1  # maximum absolute value of output actions
+    max_action = 4  # maximum absolute value of output actions
     state_dim = 22  # number of input values in the neural network (vector length of state input)
     device = torch.device(
         "cuda" if torch.cuda.is_available() else "cpu"
@@ -43,7 +43,7 @@ def main(args=None):
     epoch = 0  # starting epoch number
     episode = 0  # starting episode number
     batch_size = 40  # batch size for each training iteration
-    max_steps = 2000  # maximum number of steps in single episode
+    max_steps = 500  # maximum number of steps in single episode
     steps = 0  # starting step number
     load_saved_buffer = False  # whether to load experiences from assets/data.yml
     pretrain = False # whether to use the loaded experiences to pre-train the model (load_saved_buffer must be True)
@@ -122,6 +122,7 @@ def main(args=None):
             terminal or steps == max_steps
         ):  # reset environment of terminal stat ereached, or max_steps were taken
             print("terminal state reached")
+            ros.terminate()
             latest_scan = None
             
             episode += 1

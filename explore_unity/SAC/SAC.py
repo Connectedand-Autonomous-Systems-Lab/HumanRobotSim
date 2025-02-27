@@ -68,13 +68,13 @@ class SAC(object):
             obs_dim=self.state_dim,
             action_dim=action_dim,
             hidden_dim=1024,
-            hidden_depth=2,
+            hidden_depth=3,
         ).to(self.device)
         self.critic_target = critic_model(
             obs_dim=self.state_dim,
             action_dim=action_dim,
             hidden_dim=1024,
-            hidden_depth=2,
+            hidden_depth=3,
         ).to(self.device)
         self.critic_target.load_state_dict(self.critic.state_dict())
 
@@ -82,7 +82,7 @@ class SAC(object):
             obs_dim=self.state_dim,
             action_dim=action_dim,
             hidden_dim=1024,
-            hidden_depth=2,
+            hidden_depth=3,
             log_std_bounds=[-5, 2],
         ).to(self.device)
 

@@ -56,12 +56,18 @@ class ROS_env:
         self.slam_handler.start()
         
         # Rewards and Penalties
-        self.max_reward_in_history = 5000
-        self.max_map_exploration_reward = 20
-        self.max_idling_penalty = 10
+        self.max_reward_in_history = 50
+        self.max_map_exploration_reward = 50
+        self.max_idling_penalty = 3
         self.robot_position_buffer_size = 20
-        self.robot_position_idle_penalty_threshold = 0.1
+        self.robot_position_idle_penalty_threshold = 0.2
         self.robot_position_buffer = deque()
+        self.robot_trajectory = []
+        self.prev_std_x = 0
+        self.prev_std_y = 0
+
+    def terminate(self):
+        self.slam_handler.stop()
 
     def step(self, is_tf_available, lin_velocity=0.0, ang_velocity=0.1):
         self.cmd_vel_publisher.publish_cmd_vel(lin_velocity, ang_velocity)
@@ -82,11 +88,14 @@ class ROS_env:
                 print(Fore.RED + "Scan not available" + Style.RESET_ALL)
                 continue
         except ValueError as e: # this means either of above has some values. So it cannot be compared to None
-            # print(e)
+            print(e)
             pass
 
-        self.append_to_robot_position_buffer(latest_position)
+        # self.append_to_robot_position_buffer(latest_position)
+        self.robot_trajectory.append([latest_position.x,latest_position.y])
         collision = self.check_collision(latest_scan)
+        if collision:
+            print(Fore.RED + "Collision!" + Style.RESET_ALL)
         action = [lin_velocity, ang_velocity]
         difference_map_value = self.sensor_subscriber.map_value - self.sensor_subscriber.previous_map_value 
         reward = self.get_reward(collision, action, latest_scan, difference_map_value)
@@ -112,28 +121,32 @@ class ROS_env:
 
         self.slam_handler.stop()
         self.slam_handler.start()    
-        self.sensor_subscriber.transform = None        
+        self.sensor_subscriber.transform = None  
+        self.prev_std_x=0
+        self.prev_std_y=0   
+        
 
         self.physics_client.unpause_physics()
         rclpy.spin_once(self.sensor_subscriber)
         print("Waiting after reset")
-        time.sleep(3)
+        time.sleep(0.5)
         self.physics_client.pause_physics()
-
-        latest_scan, latest_position, collision, action, reward, free_pixels= self.step(
-            is_transform_available, lin_velocity=action[0], ang_velocity=action[1]
-        )
         
+        for i in range(20):
+            latest_scan, latest_position, collision, action, reward, free_pixels= self.step(
+                is_transform_available, lin_velocity=action[0], ang_velocity=action[1]
+            )
+        self.robot_trajectory = []
         return latest_scan, latest_position, False, action, reward, free_pixels
 
     def eval(self, scenario):
         self.cmd_vel_publisher.publish_cmd_vel(0.0, 0.0)
 
         self.target = [scenario[-1].x, scenario[-1].y]
-        self.publish_target.publish(self.target[0], self.target[1])
+        # self.publish_target.publish(self.target[0], self.target[1])
 
-        for element in scenario[:-1]:
-            self.set_position(element.name, element.x, element.y, element.angle)
+        # for element in scenario[:-1]:
+        #     self.set_position(element.name, element.x, element.y, element.angle)
 
         self.physics_client.unpause_physics()
         time.sleep(1)
@@ -142,12 +155,12 @@ class ROS_env:
         )
         return latest_scan, latest_position, False, False, action, reward
 
-    def append_to_robot_position_buffer(self, current_position):
-        if len(self.robot_position_buffer)<=self.robot_position_buffer_size:
-            self.robot_position_buffer.append([current_position.x,current_position.y])
-        else:
-            self.robot_position_buffer.popleft()
-            self.robot_position_buffer.append([current_position.x,current_position.y])
+    # def append_to_robot_position_buffer(self, current_position):
+    #     if len(self.robot_position_buffer)<=self.robot_position_buffer_size:
+    #         self.robot_position_buffer.append([current_position.x,current_position.y])
+    #     else:
+    #         self.robot_position_buffer.popleft()
+    #         self.robot_position_buffer.append([current_position.x,current_position.y])
             
     def set_target_position(self, robot_position):
         pos = False
@@ -231,14 +244,37 @@ class ROS_env:
                 return idling_penalty
             else: return 0
 
+        def sparcity_reward():
+            # print(self.robot_position_buffer)
+            n = len(self.robot_trajectory)
+            # print(n)
+            current_std_x = np.std(np.array(self.robot_trajectory)[:,0])
+            current_std_y = np.std(np.array(self.robot_trajectory)[:,1])
+            
+            rate_std_x =  current_std_x*n - self.prev_std_x*(n-1)
+            rate_std_y =  current_std_y*n- self.prev_std_y*(n-1)
+
+            self.prev_std_x = current_std_x
+            self.prev_std_y = current_std_y
+            
+            scale = 1
+            # sparcity = (rate_std_x + rate_std_y) * scale
+            sparcity = (current_std_x + current_std_y) * scale
+            return sparcity
+
         if collision:
             return -100.0
         else:
             r3 = lambda x: 1.35 - x if x < 1.35 else 0.0
             # print(map_scale(map_value_gain))
-            idling_penlaty = avoid_idle()
-            totol_reward = action[0] - abs(action[1]) / 2 - r3(min(laser_scan)) / 2 + map_scale(map_value_gain) - idling_penlaty
+            # idling_penlaty = avoid_idle()
+            map_reward = map_scale(map_value_gain)
+            rotation_penalty = abs(action[1])*3
+            sparcity_reward_ = sparcity_reward()
+            totol_reward = action[0] - rotation_penalty - r3(min(laser_scan)) / 2 + map_reward + sparcity_reward_
             # print(math.isnan(totol_reward))
+            print(f"Rewards----- Total: {totol_reward:.2f} | Map gain: {map_reward:.2f} | Rot Penalty: {rotation_penalty:.2f} | Sparcity : {sparcity_reward_:.2f}")
+
             return totol_reward
 
     @staticmethod
