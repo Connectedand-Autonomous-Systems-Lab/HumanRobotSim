@@ -60,7 +60,7 @@ class ROS_env:
         self.max_map_exploration_reward = 50
         self.max_idling_penalty = 3
         self.robot_position_buffer_size = 20
-        self.robot_position_idle_penalty_threshold = 0.2
+        self.robot_position_idle_penalty_threshold = 0.6
         self.robot_position_buffer = deque()
         self.robot_trajectory = []
         self.prev_std_x = 0
@@ -91,7 +91,7 @@ class ROS_env:
             print(e)
             pass
 
-        # self.append_to_robot_position_buffer(latest_position)
+        self.append_to_robot_position_buffer(latest_position)
         self.robot_trajectory.append([latest_position.x,latest_position.y])
         collision = self.check_collision(latest_scan)
         if collision:
@@ -101,6 +101,11 @@ class ROS_env:
         reward = self.get_reward(collision, action, latest_scan, difference_map_value)
 
         return latest_scan, latest_position, collision, action, reward, free_pixels
+
+    def ready(self):
+        if self.sensor_subscriber.latest_position==None or self.sensor_subscriber.latest_scan==None:
+            return False
+        else: return True
 
     def reset(self, is_transform_available):
         self.world_reset.reset_world()
@@ -132,11 +137,18 @@ class ROS_env:
         time.sleep(0.5)
         self.physics_client.pause_physics()
         
-        for i in range(20):
-            latest_scan, latest_position, collision, action, reward, free_pixels= self.step(
+        while True:
+            self.cmd_vel_publisher.publish_cmd_vel(0.0, 0.0)
+            self.physics_client.unpause_physics()
+            time.sleep(0.1)
+            rclpy.spin_once(self.sensor_subscriber)
+            self.physics_client.pause_physics()
+            if self.ready(): break
+
+        self.robot_trajectory = []
+        latest_scan, latest_position, collision, action, reward, free_pixels= self.step(
                 is_transform_available, lin_velocity=action[0], ang_velocity=action[1]
             )
-        self.robot_trajectory = []
         return latest_scan, latest_position, False, action, reward, free_pixels
 
     def eval(self, scenario):
@@ -155,12 +167,12 @@ class ROS_env:
         )
         return latest_scan, latest_position, False, False, action, reward
 
-    # def append_to_robot_position_buffer(self, current_position):
-    #     if len(self.robot_position_buffer)<=self.robot_position_buffer_size:
-    #         self.robot_position_buffer.append([current_position.x,current_position.y])
-    #     else:
-    #         self.robot_position_buffer.popleft()
-    #         self.robot_position_buffer.append([current_position.x,current_position.y])
+    def append_to_robot_position_buffer(self, current_position):
+        if len(self.robot_position_buffer)<=self.robot_position_buffer_size:
+            self.robot_position_buffer.append([current_position.x,current_position.y])
+        else:
+            self.robot_position_buffer.popleft()
+            self.robot_position_buffer.append([current_position.x,current_position.y])
             
     def set_target_position(self, robot_position):
         pos = False
@@ -262,18 +274,32 @@ class ROS_env:
             sparcity = (current_std_x + current_std_y) * scale
             return sparcity
 
+        def trajectory_deviation():
+            current_position = self.robot_trajectory[-1]
+            total_distance = 0
+            for point in self.robot_trajectory[:-1]:
+                total_distance += math.sqrt((point[0]-current_position[0])**2 + (point[1]-current_position[1])**2)
+            try:
+                avg_distance = total_distance/(len(self.robot_trajectory)-1)
+                return avg_distance
+            except ZeroDivisionError:
+                return 0
+
         if collision:
             return -100.0
         else:
-            r3 = lambda x: 1.35 - x if x < 1.35 else 0.0
+            r3 = lambda x: 2.5 - x if x < 2.5 else 0.0
             # print(map_scale(map_value_gain))
             # idling_penlaty = avoid_idle()
             map_reward = map_scale(map_value_gain)
-            rotation_penalty = abs(action[1])*3
+            rotation_penalty = abs(action[1])/2
             sparcity_reward_ = sparcity_reward()
-            totol_reward = action[0] - rotation_penalty - r3(min(laser_scan)) / 2 + map_reward + sparcity_reward_
+            idling_penalty = avoid_idle()
+            collision_penalty = r3(min(laser_scan)) / 2
+            trajectory_deviation = trajectory_deviation()
+            totol_reward = action[0]  + map_reward- collision_penalty - rotation_penalty
             # print(math.isnan(totol_reward))
-            print(f"Rewards----- Total: {totol_reward:.2f} | Map gain: {map_reward:.2f} | Rot Penalty: {rotation_penalty:.2f} | Sparcity : {sparcity_reward_:.2f}")
+            print(f"Rewards----- Map gain: {map_reward:.2f} | Lin vel: {action[0]:.2f} | Col Pen : {collision_penalty:.2f} | traj dev: {trajectory_deviation:.2f} | Total: {totol_reward:.2f}")
 
             return totol_reward
 

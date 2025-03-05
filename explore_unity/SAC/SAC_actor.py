@@ -39,8 +39,8 @@ class TanhTransform(pyd.transforms.Transform):
 
 class SquashedNormal(pyd.transformed_distribution.TransformedDistribution):
     def __init__(self, loc, scale):
-        self.loc = loc
-        self.scale = scale
+        self.loc = loc   # like mean
+        self.scale = scale  # like std
 
         self.base_dist = pyd.Normal(loc, scale)
         transforms = [TanhTransform()]
@@ -91,6 +91,7 @@ class DiagGaussianActor(nn.Module):
         # print(torch.isnan(std))
         # print("actor is passed")
         dist = SquashedNormal(mu, std)
+        # print(dist)
         return dist
 
     def log(self, writer, step):

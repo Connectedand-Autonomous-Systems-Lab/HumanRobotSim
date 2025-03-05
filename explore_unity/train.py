@@ -28,7 +28,7 @@ def main(args=None):
     """Main training function"""
     action_dim = 2  # number of actions produced by the model
     max_action = 4  # maximum absolute value of output actions
-    state_dim = 22  # number of input values in the neural network (vector length of state input)
+    state_dim = 24  # number of input values in the neural network (vector length of state input)
     device = torch.device(
         "cuda" if torch.cuda.is_available() else "cpu"
     )  # using cuda if it is available, cpu otherwise
@@ -43,14 +43,14 @@ def main(args=None):
     epoch = 0  # starting epoch number
     episode = 0  # starting episode number
     batch_size = 40  # batch size for each training iteration
-    max_steps = 500  # maximum number of steps in single episode
+    max_steps = 2000 # maximum number of steps in single episode
     steps = 0  # starting step number
     load_saved_buffer = False  # whether to load experiences from assets/data.yml
     pretrain = False # whether to use the loaded experiences to pre-train the model (load_saved_buffer must be True)
     pretraining_iterations = (
         50  # number of training iterations to run during pre-training
     )
-    save_every = 10  # save the model every n training cycles
+    save_every = 3  # save the model every n training cycles
 
     is_transform_available = True
     
@@ -107,7 +107,7 @@ def main(args=None):
             (action[0] + 1) / 2,
             action[1],
         ]  # clip linear velocity to [0, 0.5] m/s range
-
+        # print(a_in[0],a_in[1])
         latest_scan, robot_odom, collision, a, reward, free_pixels = ros.step(
             is_transform_available, lin_velocity=a_in[0], ang_velocity=a_in[1]
         )  # get data from the environment

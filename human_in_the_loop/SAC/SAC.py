@@ -68,13 +68,13 @@ class SAC(object):
             obs_dim=self.state_dim,
             action_dim=action_dim,
             hidden_dim=1024,
-            hidden_depth=3,
+            hidden_depth=2,
         ).to(self.device)
         self.critic_target = critic_model(
             obs_dim=self.state_dim,
             action_dim=action_dim,
             hidden_dim=1024,
-            hidden_depth=3,
+            hidden_depth=2,
         ).to(self.device)
         self.critic_target.load_state_dict(self.critic.state_dict())
 
@@ -82,7 +82,7 @@ class SAC(object):
             obs_dim=self.state_dim,
             action_dim=action_dim,
             hidden_dim=1024,
-            hidden_depth=3,
+            hidden_depth=2,
             log_std_bounds=[-5, 2],
         ).to(self.device)
 
@@ -170,7 +170,7 @@ class SAC(object):
         if add_noise:
             return (
                 self.act(obs) + np.random.normal(0, 0.2, size=self.action_dim)
-            ).clip(self.action_range[0], self.action_range[1])
+            )
         else:
             return self.act(obs)
 
@@ -180,7 +180,7 @@ class SAC(object):
         
         dist = self.actor(obs)
         action = dist.sample() if sample else dist.mean
-        action = action.clamp(*self.action_range)
+        # action = action.clamp(*self.action_range)
         assert action.ndim == 2 and action.shape[0] == 1
         return utils.to_np(action[0])
 
@@ -309,7 +309,7 @@ class SAC(object):
         # print(f"min values {len(min_values)}")
         # print(min_values)
         state = min_values + [odom.x , odom.y] + [action[0], action[1]]
-        print(odom.x,odom.y)
+        # print(odom.x,odom.y)
         # print(state)
 
         # print(len(state), self.state_dim)

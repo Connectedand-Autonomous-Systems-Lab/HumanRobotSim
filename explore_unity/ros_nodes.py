@@ -7,7 +7,7 @@ from rclpy.qos import QoSProfile
 from nav_msgs.msg import Odometry, OccupancyGrid
 from std_srvs.srv import Empty
 from gazebo_msgs.srv import SetEntityState
-from geometry_msgs.msg import Pose, Twist, PoseStamped
+from geometry_msgs.msg import Pose, Twist, PoseStamped, PoseWithCovarianceStamped
 from visualization_msgs.msg import Marker
 from rclpy.logging import LoggingSeverity
 import numpy as np
@@ -47,9 +47,14 @@ class SensorSubscriber(Node):
         self.subscriber_ = self.create_subscription(
             LaserScan, "tb3_0/scan", self.scan_listener_callback, 1
         )
-        self.subscriber_ = self.create_subscription(
-            Odometry, "tb3_0/odom", self.odom_listener_callback, 1
-        )
+        # self.subscriber_ = self.create_subscription(
+        #     Odometry, "tb3_0/odom", self.odom_listener_callback, 1
+        # )
+        self.subscription = self.create_subscription(
+            PoseWithCovarianceStamped,
+            '/tb3_0/pose',  # Replace with your topic name
+            self.pose_callback,
+            10)
         self.subscriber_ = self.create_subscription(
             OccupancyGrid, "tb3_0/map", self.map_listener_callback, 1
         )
@@ -77,6 +82,10 @@ class SensorSubscriber(Node):
         self.odom_frame = msg.header.frame_id
         self.robot_position = msg
     
+    def pose_callback(self, msg):
+        self.latest_position = msg.pose.pose.position
+        # self.get_logger().info(f'Received Pose: x={x:.3f}, y={y:.3f}')
+
     def map_listener_callback(self, msg):
         self.latest_map = msg
 
@@ -288,8 +297,8 @@ class SlamHandler:
 
         return LaunchDescription([
             DeclareLaunchArgument('use_sim_time',default_value='true',description='Use simulation (Gazebo) clock if true'),
-            self.slam_toolbox_tb3_0,
-            self.ros_tcp_connector
+            self.slam_toolbox_tb3_0
+            # self.ros_tcp_connector
         ])
 
     def _run_process(self, stop_event, launch_description):

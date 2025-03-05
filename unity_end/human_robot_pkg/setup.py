@@ -25,6 +25,7 @@ setup(
     entry_points={
         'console_scripts': [
             'map_merge_node = human_robot_pkg.merge_map:main',
+            'frontier_pub = human_robot_pkg.frontier:main',
         ],
     },
 )

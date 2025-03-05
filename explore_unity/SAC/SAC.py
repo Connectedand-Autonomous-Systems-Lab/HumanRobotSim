@@ -68,13 +68,13 @@ class SAC(object):
             obs_dim=self.state_dim,
             action_dim=action_dim,
             hidden_dim=1024,
-            hidden_depth=3,
+            hidden_depth=2,
         ).to(self.device)
         self.critic_target = critic_model(
             obs_dim=self.state_dim,
             action_dim=action_dim,
             hidden_dim=1024,
-            hidden_depth=3,
+            hidden_depth=2,
         ).to(self.device)
         self.critic_target.load_state_dict(self.critic.state_dict())
 
@@ -82,8 +82,8 @@ class SAC(object):
             obs_dim=self.state_dim,
             action_dim=action_dim,
             hidden_dim=1024,
-            hidden_depth=3,
-            log_std_bounds=[-5, 2],
+            hidden_depth=2,
+            log_std_bounds=[-5, 5],
         ).to(self.device)
 
         if load_model:
@@ -180,9 +180,10 @@ class SAC(object):
         
         dist = self.actor(obs)
         action = dist.sample() if sample else dist.mean
+        # print(action)
         action = action.clamp(*self.action_range)
         assert action.ndim == 2 and action.shape[0] == 1
-        return utils.to_np(action[0])
+        return utils.to_np(action[0])  # Just detaching from gpu
 
     def update_critic(self, obs, action, reward, next_obs, done, step):
         # print("in update critic")

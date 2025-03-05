@@ -27,7 +27,8 @@ def check_frame_availability(tf_buffer):
 def main(args=None):
     """Main training function"""
     action_dim = 2  # number of actions produced by the model
-    max_action = 4  # maximum absolute value of output actions
+    max_linear_vel = 3  # maximum absolute value of output actions
+    max_ang_vel = 0.3
     state_dim = 22  # number of input values in the neural network (vector length of state input)
     device = torch.device(
         "cuda" if torch.cuda.is_available() else "cpu"
@@ -57,10 +58,10 @@ def main(args=None):
     model = SAC(
         state_dim=state_dim,
         action_dim=action_dim,
-        max_action=max_action,
+        max_action=max_linear_vel,
         device=device,
         save_every=save_every,
-        load_model=True,
+        load_model=False,
     )  # instantiate a model
 
     ros = ROS_env()  # instantiate ROS environment
@@ -100,9 +101,11 @@ def main(args=None):
             latest_scan, robot_odom, collision, a
         )  # get state a state representation from returned data from the environment
         action = model.get_action(state, True)  # get an action from the model
-        action = (action + np.random.normal(0, 0.2, size=action_dim)).clip(
-            -max_action, max_action
-        )  # add random noise to the model
+        action = (action + np.random.normal(0, 0.2, size=action_dim))# add random noise to the model
+
+        action[0] = np.clip(action[0], -max_linear_vel, max_linear_vel)
+        action[1] = np.clip(action[1], -max_ang_vel, max_ang_vel)
+          
         a_in = [
             (action[0] + 1) / 2,
             action[1],

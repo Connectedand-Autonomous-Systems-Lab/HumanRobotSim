@@ -27,6 +27,13 @@ def generate_launch_description():
         parameters=[{'use_sim_time':True}]
     )
 
+    frontier_pub = Node(
+        package='human_robot_pkg',
+        executable='frontier_pub',
+        output='screen',
+        parameters=[{'use_sim_time':True}]
+    )
+
     # ros2 run rviz2 rviz2 -d src/DRL-exploration/unity_end/human_robot_pkg/rviz/human_robot.rviz
 
     nav2_bringup = IncludeLaunchDescription(
@@ -97,6 +104,7 @@ def generate_launch_description():
     return LaunchDescription({
         ros_tcp_endpoint,
         rviz2,
+        # frontier_pub,
         # slam_toolbox_tb3_0,
         # slam_toolbox_human,
         # map_merge,

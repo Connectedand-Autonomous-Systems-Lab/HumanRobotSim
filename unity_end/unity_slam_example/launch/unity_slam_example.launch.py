@@ -24,6 +24,8 @@ def generate_launch_description():
         parameters=[{'use_sim_time':True}]
     )
 
+    # ros2 run rviz2 rviz2 -d src/DRL-exploration/unity_end/human_robot_pkg/rviz/human_robot.rviz
+
     nav2_bringup = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(get_package_share_directory('nav2_bringup'), 'launch', 'navigation_launch.py')
@@ -60,7 +62,7 @@ def generate_launch_description():
     
     return LaunchDescription({
         ros_tcp_endpoint,
-        rviz2,
+        # rviz2,
         # tb3_0_nav2_bringup,
         # tb3_0_slam_toolbox,
         # slam_toolbox

@@ -272,15 +272,20 @@ class ROS_env:
         if collision:
             return -100.0
         else:
-            r3 = lambda x: 1.35 - x if x < 1.35 else 0.0
+            r3 = lambda x: 3 - x if x < 1.35 else 0.0
             # print(map_scale(map_value_gain))
             # idling_penlaty = avoid_idle()
             map_reward = map_scale(map_value_gain)
-            rotation_penalty = abs(action[1])*30
+            rotation_penalty = abs(action[1])/2
+            linear_reward = action[0]
             sparcity_reward_ = sparcity_reward()
-            totol_reward = action[0]*10 - rotation_penalty - r3(min(laser_scan)) / 2  
+            collision_penalty = r3(min(laser_scan)) / 2
+            totol_reward = linear_reward - rotation_penalty - collision_penalty
             # print(math.isnan(totol_reward))
-            print(f"Rewards----- Total: {totol_reward:.2f} | Map gain: {map_reward:.2f} | Rot Penalty: {rotation_penalty:.2f} | Sparcity : {sparcity_reward_:.2f}")
+            # print(f"Rewards----- Total: {totol_reward:.2f} | Map gain: {map_reward:.2f} | Rot Penalty: {rotation_penalty:.2f} | Sparcity : {sparcity_reward_:.2f}")
+            # print(f"Rewards----- Total: {totol_reward:.2f} |  Lin reward: {linear_reward:.2f} | Rot Penalty: {rotation_penalty:.2f} | Collision Penalty: {collision_penalty:.2f} | map: {map_reward:.2f}")
+            print(f"Rewards----- Total: {totol_reward:.2f} |  Lin reward: {linear_reward:.2f} | Rot Penalty: {rotation_penalty:.2f} | Collision Penalty: {collision_penalty:.2f} ")
+
 
             return totol_reward
 
