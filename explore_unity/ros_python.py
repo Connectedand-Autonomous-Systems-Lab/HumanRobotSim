@@ -58,9 +58,12 @@ class ROS_env:
         # Rewards and Penalties
         self.max_reward_in_history = 50
         self.max_map_exploration_reward = 50
+        self.map_difference_threshold = 200
+        self.map_buffer_counter = 0
+        self.map_buffer_size = 8
         self.max_idling_penalty = 3
         self.robot_position_buffer_size = 20
-        self.robot_position_idle_penalty_threshold = 0.6
+        self.robot_position_idle_penalty_threshold = 1.2
         self.robot_position_buffer = deque()
         self.robot_trajectory = []
         self.prev_std_x = 0
@@ -97,8 +100,9 @@ class ROS_env:
         if collision:
             print(Fore.RED + "Collision!" + Style.RESET_ALL)
         action = [lin_velocity, ang_velocity]
-        difference_map_value = self.sensor_subscriber.map_value - self.sensor_subscriber.previous_map_value 
-        reward = self.get_reward(collision, action, latest_scan, difference_map_value)
+        # difference_map_value = self.sensor_subscriber.map_value - self.sensor_subscriber.previous_map_value 
+        # reward = self.get_reward(collision, action, latest_scan, difference_map_value)
+        reward = self.get_reward(collision, action, latest_scan)
 
         return latest_scan, latest_position, collision, action, reward, free_pixels
 
@@ -235,7 +239,33 @@ class ROS_env:
 
         return distance, cos, sin, angle
 
-    def get_reward(self, collision, action, laser_scan, map_value_gain):
+    def get_furthest_angle(scan_ranges, angle_min, angle_max):
+        """
+        Get the angle that gives the furthest distance in laser scan.
+
+        Args:
+            scan_ranges (list or np.array): Laser scan distance readings.
+            angle_min (float): Minimum angle of laser scan in radians.
+            angle_max (float): Maximum angle of laser scan in radians.
+
+        Returns:
+            float: Angle in radians where the furthest distance is detected.
+        """
+        # Convert scan to numpy array
+        scan_ranges = np.array(scan_ranges)
+        
+        # Get the index of the maximum distance (furthest point)
+        max_index = np.argmax(scan_ranges)
+        
+        # Calculate angle step size between each laser beam
+        angle_step = (angle_max - angle_min) / len(scan_ranges)
+        
+        # Get the angle corresponding to the max distance
+        furthest_angle = angle_min + max_index * angle_step
+        
+        return furthest_angle
+
+    def get_reward(self, collision, action, laser_scan):
 
         def map_scale(map_value_gain):
             if map_value_gain>self.max_reward_in_history:
@@ -244,6 +274,17 @@ class ROS_env:
             scaled_map_value_gain = self.max_map_exploration_reward*map_value_gain/ self.max_reward_in_history
             scaled_map_value_gain = max(0, scaled_map_value_gain)
             return scaled_map_value_gain
+        
+        def map_reward_binary():
+            if self.sensor_subscriber.map_value > self.sensor_subscriber.previous_map_value + self.map_difference_threshold:
+                self.map_buffer_counter = 0
+                return 1
+            else:
+                if self.map_buffer_counter< self.map_buffer_size:
+                    self.map_buffer_counter +=1
+                    return 1
+                else:
+                    return -1
         
         def avoid_idle():
             # print(self.robot_position_buffer)
@@ -291,16 +332,24 @@ class ROS_env:
             r3 = lambda x: 2.5 - x if x < 2.5 else 0.0
             # print(map_scale(map_value_gain))
             # idling_penlaty = avoid_idle()
-            map_reward = map_scale(map_value_gain)
-            rotation_penalty = abs(action[1])/2
+            map_reward = map_reward_binary()
+            ang_penalty = abs(action[1])/2
             sparcity_reward_ = sparcity_reward()
             idling_penalty = avoid_idle()
-            collision_penalty = r3(min(laser_scan)) / 2
-            trajectory_deviation = trajectory_deviation()
-            totol_reward = action[0]  + map_reward- collision_penalty - rotation_penalty
+            collision_penalty = r3(min(laser_scan))
+            trajectory_deviation_ = trajectory_deviation()
+            totol_reward = action[0]  + map_reward- collision_penalty - ang_penalty - idling_penalty
             # print(math.isnan(totol_reward))
-            print(f"Rewards----- Map gain: {map_reward:.2f} | Lin vel: {action[0]:.2f} | Col Pen : {collision_penalty:.2f} | traj dev: {trajectory_deviation:.2f} | Total: {totol_reward:.2f}")
-
+            # print(f"Rewards----- Map gain: {map_reward:.2f} | Lin vel: {action[0]:.2f} | Col Pen : {collision_penalty:.2f} | traj dev: {trajectory_deviation:.2f} | Total: {totol_reward:.2f}")
+            reward_str = "Rewards----- "
+            reward_str += f"Map gain: {map_reward:.2f} | " 
+            reward_str += f"Lin vel: {action[0]:.2f} | "
+            reward_str += f"Col Pen: {collision_penalty:.2f} | " 
+            # reward_str += f"traj dev: {trajectory_deviation_:.2f} | " 
+            reward_str += f"ang pen: {ang_penalty:.2f} | " 
+            reward_str += f"idle pen: {idling_penalty:.2f} | " 
+            reward_str += f"Total: {totol_reward:.2f}" 
+            print(reward_str)
             return totol_reward
 
     @staticmethod

@@ -11,6 +11,8 @@ from pretrain_utils import Pretraining
 from colorama import Fore, Style
 import rclpy
 from tf2_ros import Buffer, TransformException
+import matplotlib.pyplot as plt
+import json
 
 def check_frame_availability(tf_buffer):
     try:
@@ -24,6 +26,40 @@ def check_frame_availability(tf_buffer):
         print(Fore.RED+ str(e) + Style.RESET_ALL)
         return False
 
+def plot_map_value(map_value):
+    # Get the last 10 episodes
+    last_10 = map_value[-30:]  # Slice the last 10 entries
+
+    # Calculate the average free_pixels
+    avg_free_pixels = sum(d["free_pixels"] for d in last_10) / len(last_10)
+
+    print(f"Average Free Pixels (Last 10 Episodes): {avg_free_pixels:.2f}")
+
+    with open("src/DRL-exploration/gridsearch/map_value.json", "w") as f:
+        json.dump(map_value, f, indent=4)
+
+    print("Map value saved to map_value.json ✅")
+
+    global_steps = []
+    step = 0
+
+    for d in map_value:
+        step += 1
+        global_steps.append(step)
+
+    # Extract free pixels
+    free_pixels = [d["free_pixels"] for d in map_value]
+
+    # Plotting
+    plt.figure(figsize=(10, 5))
+    plt.plot(global_steps, free_pixels, marker='o', linestyle='-', color='b', label='Free Pixels')
+    plt.xlabel("Global Step")
+    plt.ylabel("Free Pixels")
+    plt.title("Free Pixels over Training Steps")
+    plt.grid(True)
+    plt.legend()
+    plt.show()
+
 def main(args=None):
     """Main training function"""
     action_dim = 2  # number of actions produced by the model
@@ -34,23 +70,23 @@ def main(args=None):
     )  # using cuda if it is available, cpu otherwise
 
     # Resource saving parameters
-    nr_eval_episodes = 10  # how many episodes to use to run evaluation
-    max_epochs = 100  # max number of epochs
-    episodes_per_epoch = 70 # how many episodes to run in single epoch
+    nr_eval_episodes = 2  # how many episodes to use to run evaluation
+    max_epochs = 20  # max number of epochs
+    episodes_per_epoch = 20 # how many episodes to run in single epoch
     train_every_n = 2  # train and update network parameters every n episodes
     training_iterations = 500  # how many batches to use for single training cycle
 
     epoch = 0  # starting epoch number
     episode = 0  # starting episode number
     batch_size = 40  # batch size for each training iteration
-    max_steps = 2000 # maximum number of steps in single episode
+    max_steps = 800 # maximum number of steps in single episode
     steps = 0  # starting step number
     load_saved_buffer = False  # whether to load experiences from assets/data.yml
     pretrain = False # whether to use the loaded experiences to pre-train the model (load_saved_buffer must be True)
     pretraining_iterations = (
         50  # number of training iterations to run during pre-training
     )
-    save_every = 3  # save the model every n training cycles
+    save_every = 0  # save the model every n training cycles
 
     is_transform_available = True
     
@@ -60,7 +96,7 @@ def main(args=None):
         max_action=max_action,
         device=device,
         save_every=save_every,
-        load_model=True,
+        load_model=False,
     )  # instantiate a model
 
     ros = ROS_env()  # instantiate ROS environment
@@ -91,7 +127,8 @@ def main(args=None):
         )  # if not experiences are loaded, instantiate an empty buffer
     
     latest_scan, robot_odom, collision, a, reward, free_pixels = ros.reset(is_transform_available)
-
+    map_value = []
+    num_collisions = 0
     print(f"Training using {device}")
     while epoch < max_epochs:  # train until max_epochs is reached
         # is_transform_available = check_frame_availability(tf_buffer)
@@ -121,6 +158,7 @@ def main(args=None):
         if (
             terminal or steps == max_steps
         ):  # reset environment of terminal stat ereached, or max_steps were taken
+            num_collisions +=1
             print("terminal state reached")
             ros.terminate()
             latest_scan = None
@@ -128,6 +166,7 @@ def main(args=None):
             episode += 1
             if episode % train_every_n == 0:
                 print(Fore.BLUE+ "training the model"+ Style.RESET_ALL)
+                map_value.append({"epoch": epoch, "episode": episode, "free_pixels": free_pixels})
                 model.train(
                     replay_buffer=replay_buffer,
                     iterations=training_iterations,
@@ -152,7 +191,8 @@ def main(args=None):
                 epoch=epoch,
                 max_steps=max_steps,
             )  # run evaluation
-
+    plot_map_value(map_value)
+    print(f"Number of collisions : {num_collisions}")
 
 def eval(model, env, scenarios, epoch, max_steps):
     """Function to run evaluation"""

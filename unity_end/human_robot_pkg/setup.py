@@ -13,7 +13,8 @@ setup(
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
         (os.path.join('share', package_name, 'launch'), glob(os.path.join('launch', '*launch.[pxy][yma]*'))),
-        (os.path.join('share', package_name, 'config'), glob(os.path.join('config', '*.yaml')))
+        (os.path.join('share', package_name, 'config'), glob(os.path.join('config', '*.yaml'))),
+        (os.path.join('share', package_name, 'config'), glob(os.path.join('params', '*.yaml')))
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -26,6 +27,11 @@ setup(
         'console_scripts': [
             'map_merge_node = human_robot_pkg.merge_map:main',
             'frontier_pub = human_robot_pkg.frontier:main',
+            'simple_navigator = human_robot_pkg.simple_navigator:main',
+            'param_loader = human_robot_pkg.param_loader:main',
+            'map_logger = human_robot_pkg.map_logger:main',
+            'odom_pub = human_robot_pkg.odom_publisher:main',
+            'image_visualiser = human_robot_pkg.image_subscriber:main'
         ],
     },
 )

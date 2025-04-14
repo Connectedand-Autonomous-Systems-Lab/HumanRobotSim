@@ -33,7 +33,7 @@ def main(args=None):
     pretraining_iterations = (
         50  # number of training iterations to run during pre-training
     )
-    save_every = 100  # save the model every n training cycles
+    save_every = 10  # save the model every n training cycles
 
     print(f"training using {device}")
     model = SAC(

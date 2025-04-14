@@ -61,7 +61,8 @@ class SAC(object):
                                     "train_actor/entropy_av": [],
                                     "train_alpha/loss_av": [],
                                     "train_alpha/value_av": [],
-                                    "train/batch_reward_av": []
+                                    "train/batch_reward_av": [],
+                                    "train/map_value":[]
         }
 
         self.critic = critic_model(
@@ -83,7 +84,7 @@ class SAC(object):
             action_dim=action_dim,
             hidden_dim=1024,
             hidden_depth=2,
-            log_std_bounds=[-5, 5],
+            log_std_bounds=[-5, 2],
         ).to(self.device)
 
         if load_model:
@@ -181,9 +182,13 @@ class SAC(object):
         dist = self.actor(obs)
         action = dist.sample() if sample else dist.mean
         # print(action)
+        # action[0] = abs(action[0]) * self.action_range[1]
         action = action.clamp(*self.action_range)
         assert action.ndim == 2 and action.shape[0] == 1
-        return utils.to_np(action[0])  # Just detaching from gpu
+        action = utils.to_np(action[0])  # Just detaching from gpu
+        # print(action)
+        action[0] = action[0]*self.action_range[1]
+        return action
 
     def update_critic(self, obs, action, reward, next_obs, done, step):
         # print("in update critic")

@@ -25,6 +25,8 @@ import math
 OCC_THRESHOLD = 10
 MIN_FRONTIER_SIZE = 5
 
+namespace = ""
+
 class OccupancyGrid2d():
     class CostValues(Enum):
         FreeSpace = 0
@@ -213,9 +215,9 @@ def getFrontier(pose, costmap, logger):
 class FrontierPublisher(Node):
     def __init__(self):
         super().__init__(node_name='frontier_publisher')
-        self.costmapSub = self.create_subscription(OccupancyGrid, '/tb3_0/map', self.occupancyGridCallback, 1)
-        self.model_pose_sub = self.create_subscription(PoseWithCovarianceStamped,'/tb3_0/pose', self.poseCallback, 1)
-        self.frontierPub = self.create_publisher(PoseArray, 'frontiers', 10)
+        self.costmapSub = self.create_subscription(OccupancyGrid, namespace + '/merged_map', self.occupancyGridCallback, 1)
+        self.model_pose_sub = self.create_subscription(PoseWithCovarianceStamped, namespace + '/pose', self.poseCallback, 1)
+        self.frontierPub = self.create_publisher(PoseArray, namespace + '/frontiers', 10)
         self.get_logger().info('Running Waypoint Test')
         self.initial_pose_received = False
         self.initial_map_received = False
@@ -228,7 +230,7 @@ class FrontierPublisher(Node):
             frontiers = getFrontier(self.currentPose, self.costmap, self.get_logger())
             pose_array = PoseArray()
             pose_array.header.stamp = self.get_clock().now().to_msg()
-            pose_array.header.frame_id = 'tb3_0/map'
+            pose_array.header.frame_id =   'map'
             for frontier in frontiers:
                 pose = Pose()
                 pose.position.x = float(frontier[0])  # x coordinate

@@ -77,6 +77,7 @@ class DiagGaussianActor(nn.Module):
         # print(torch.isnan(log_std).any(), torch.isinf(log_std).any())
         # print(log_std.max(), log_std.min())
         # constrain log_std inside [log_std_min, log_std_max]
+        # print(mu , log_std)  # 2 each                                | mu looks like the lin vel and ang vel  | logstd are small numbers like -0.1
         log_std = torch.tanh(log_std)
         log_std_min, log_std_max = self.log_std_bounds
         log_std = log_std_min + 0.5 * (log_std_max - log_std_min) * (log_std + 1)

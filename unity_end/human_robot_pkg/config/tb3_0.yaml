@@ -17,6 +17,7 @@ tb3_0:
       scan_topic: /tb3_0/scan
       use_map_saver: true
       mode: mapping #localization
+      map_topic: /tb3_0/map
 
       # if you'd like to immediately start continuing a map at a given pose
       # or at the dock, but they are mutually exclusive, if pose is given

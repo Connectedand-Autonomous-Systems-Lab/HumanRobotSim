@@ -8,7 +8,7 @@ import SAC.SAC_utils as utils
 from SAC.SAC_critic import DoubleQCritic as critic_model
 from SAC.SAC_actor import DiagGaussianActor as actor_model
 from torch.utils.tensorboard import SummaryWriter
-
+from colorama import Fore , Style
 
 class SAC(object):
     """SAC algorithm."""
@@ -36,7 +36,7 @@ class SAC(object):
         log_dist_and_hist = False,
         save_directory=Path("src/DRL-exploration/drl_navigation_ros2/models/SAC"),
         model_name="SAC",
-        load_directory=Path("src/DRL-exploration/drl_navigation_ros2/models/old2"),
+        load_directory=Path("src/DRL-exploration/drl_navigation_ros2/models/SAC"),
     ):
         super().__init__()
 
@@ -134,7 +134,8 @@ class SAC(object):
         print(f"Loaded weights from: {directory}")
 
     def train(self, replay_buffer, iterations, batch_size):
-        for _ in range(iterations):
+        for i in range(iterations):
+            print(Fore.GREEN+ f"training iterations {i} / {iterations}" + Style.RESET_ALL)
             self.update(
                 replay_buffer=replay_buffer, step=self.step, batch_size=batch_size
             )
@@ -273,6 +274,7 @@ class SAC(object):
             min_values.append(min(bin))
         state = min_values + [distance, cos, sin] + [action[0], action[1]]
 
+        print(f"distance: {distance:.2f} | cos: {cos:.2f} | sin: {sin:.2f}")
         assert len(state) == self.state_dim
         terminal = 1 if collision or goal else 0
 

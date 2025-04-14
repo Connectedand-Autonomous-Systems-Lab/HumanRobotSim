@@ -224,8 +224,10 @@ class ROS_env:
     @staticmethod
     def get_reward(goal, collision, action, laser_scan):
         if goal:
+            print("goal!")
             return 100.0
         elif collision:
+            print("collision")
             return -100.0
         else:
             r3 = lambda x: 1.35 - x if x < 1.35 else 0.0

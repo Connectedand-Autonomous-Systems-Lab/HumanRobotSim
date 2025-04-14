@@ -18,7 +18,7 @@ class MapMerger(Node):
 
         self.sub_map2 = self.create_subscription(
             OccupancyGrid,
-            '/tb3_0/map',
+            '/map',
             self.map2_callback,
             10
         )
