@@ -39,9 +39,14 @@ def generate_launch_description():
         executable="odom_pub"
     )
 
+    explore = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(get_package_share_directory('explore_lite'), 'launch', 'explore.launch.py')
+        )
+    )
 
     human_bag = ExecuteProcess(
-            cmd=['ros2', 'bag', 'play', '/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg/rosbag/1'],
+            cmd=['ros2', 'bag', 'play', '/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg/rosbag/odom scan tf only/1'],
             output='screen'
         )
 
@@ -50,6 +55,16 @@ def generate_launch_description():
         "{linear: {x: 2.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}",
         '-1'
     ]
+
+    point_to_nav_goal = Node(
+        package="human_robot_pkg",
+        executable="point_to_nav_goal",
+        output='screen',
+        parameters=[{'use_sim_time': True}],
+        remappings=[
+            ('/target_point', '/target_point')
+        ]
+    )
 
     move1 = ExecuteProcess(cmd=move_simple, output='screen')
     move2 = TimerAction(period=2.0, actions=[ExecuteProcess(cmd=move_simple, output='screen')])
@@ -63,15 +78,17 @@ def generate_launch_description():
             move1,
             move2,
             move3,
-            simple_navigator,
-            map_logger,
-            # human_bag
+            # simple_navigator,
+            # map_logger,
+            # human_bag,
+            explore,
+            # point_to_nav_goal
             ]
     )
 
     return LaunchDescription({
         navigation,
-        odom_pub,
+        # odom_pub,
         delayed_nodes,
         # simple_navigator,
         # map_logger,

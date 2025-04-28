@@ -150,7 +150,8 @@ def generate_launch_description():
             os.path.join(get_package_share_directory('slam_toolbox'), 'launch', 'online_async_launch.py')
         ),
         launch_arguments={
-            'use_sim_time': 'true'
+            'use_sim_time': 'true',
+            'slam_params_file': os.path.join(get_package_share_directory('human_robot_pkg'), 'config', 'mapper_params_online_async.yaml'),
         }.items()
     )   
 
@@ -183,9 +184,14 @@ def generate_launch_description():
     )
     
     human_bag = ExecuteProcess(
-            cmd=['ros2', 'bag', 'play', '/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg/rosbag/5'],
+            cmd=['ros2', 'bag', 'play', '/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg/rosbag/odom scan tf only/5'],
             output='screen'
         )
+    
+    odom_pub = Node(
+        package="human_robot_pkg",
+        executable="odom_pub"
+    )
 
     return LaunchDescription({
         ros_tcp_endpoint,
@@ -210,4 +216,5 @@ def generate_launch_description():
         # simple_navigator,
         
         # human_bag
+        odom_pub
     })

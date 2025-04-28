@@ -65,7 +65,7 @@ class MapLoggerNode(Node):
         self.tb_trajectory_length = 0.0
 
         self.merged_map_data = None
-        self.save_map = True
+        self.save_map = False
         self.start_time = None
 
         # Setup persistent CSV file object

@@ -6,7 +6,7 @@ from ament_index_python.packages import get_package_share_directory
 from launch_ros.actions import Node, PushRosNamespace
 import subprocess
 
-def record_ros2_bag(bag_name="3"):
+def record_ros2_bag(bag_name="5"):
     try:
         # Command to record the topics
         command = ["ros2", "bag", "record", "-o", bag_name, "/gaze/point", "/human/scan", "/tf", "/scan"]

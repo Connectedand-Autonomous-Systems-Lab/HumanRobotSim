@@ -1,7 +1,7 @@
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import PoseStamped, PoseArray, TransformStamped
-from nav2_simple_commander.robot_navigator import BasicNavigator
+from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
 from math import sqrt
 import tf2_ros
@@ -104,8 +104,6 @@ class FrontierExplorer(Node):
         # closest_frontier = min(self.frontiers, key=distance, default=None)
         return closest_frontier
     
-
-    
     def navigate_to_frontier(self):
         closest_frontier = self.get_closest_frontier()
         if closest_frontier is None:
@@ -123,6 +121,13 @@ class FrontierExplorer(Node):
         while not self.navigator.isTaskComplete():
             rclpy.spin_once(self)
         
+        result = self.navigator.getResult()
+        if result == TaskResult.SUCCEEDED:
+            print('Goal succeeded!')
+        elif result == TaskResult.CANCELED:
+            print('Goal was canceled!')
+        elif result == TaskResult.FAILED:
+            print('Goal failed!')
         self.get_logger().info("Reached frontier.")
         self.frontiers = [f for f in self.frontiers if f != closest_frontier]
 
