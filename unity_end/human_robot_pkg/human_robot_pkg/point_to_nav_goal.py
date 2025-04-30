@@ -36,7 +36,7 @@ class PointGoalNavigator(Node):
         self.get_logger().info("Navigator is ready. Listening to /target_point...")
         self.point = None
         self.current_orientation = None
-        self.reset_on_new_goal = False
+        self.reset_on_new_goal = True
 
     def point_callback(self, msg: PointStamped):
         self.get_logger().info("Received new target point.")
@@ -56,6 +56,9 @@ class PointGoalNavigator(Node):
         self.current_orientation = msg.pose.orientation
 
     def navigate_to_point(self):
+        if self.goal_in_progress:
+            return  # Do not process if a goal is already in progress
+        
         if self.point is None:
             self.get_logger().info("No point set. Waiting for a target point...")
             return

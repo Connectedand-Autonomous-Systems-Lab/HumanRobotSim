@@ -184,7 +184,7 @@ def generate_launch_description():
     )
     
     human_bag = ExecuteProcess(
-            cmd=['ros2', 'bag', 'play', '/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg/rosbag/odom scan tf only/5'],
+            cmd=['ros2', 'bag', 'play', '/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg/rosbag/lidar_experiment'],
             output='screen'
         )
     
@@ -193,21 +193,26 @@ def generate_launch_description():
         executable="odom_pub"
     )
 
+    scan_limiter = Node(
+        package="human_robot_pkg",
+        executable="scan_limiter"
+    )
+
     return LaunchDescription({
-        ros_tcp_endpoint,
+        # ros_tcp_endpoint,
         rviz2,
-        frontier_pub,
+        # frontier_pub,
         # navigation_tb3_0,
         # slam_toolbox_tb3_0,
-        slam_toolbox,
+        # slam_toolbox,
         # custom_nav2_bringup,
         # nav2_bringup_tb3_0,
         # nav2_bringup_tb3_0_pushed,
         
         slam_toolbox_human,
-        map_merge,
-        human_map_to_map,
-        tb3_0_map_to_map,
+        # map_merge,
+        # human_map_to_map,
+        # tb3_0_map_to_map,
         
         # params
         # nav2_nodes
@@ -215,6 +220,7 @@ def generate_launch_description():
         # delayed_navigation,
         # simple_navigator,
         
-        # human_bag
-        odom_pub
+        human_bag,
+        scan_limiter
+        # odom_pub
     })

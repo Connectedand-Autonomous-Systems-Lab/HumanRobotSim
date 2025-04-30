@@ -66,12 +66,16 @@ class MapLoggerNode(Node):
 
         self.merged_map_data = None
         self.save_map = False
-        self.start_time = None
+
+        self.only_tb = True
+        self.only_human = False
+        self.both = False
+        # self.start_time = None
 
         # Setup persistent CSV file object
         package_src_dir = os.path.dirname(os.path.realpath(__file__))
         package_dir = os.path.abspath(os.path.join(package_src_dir, '..'))
-        self.output_file_path = os.path.join(package_dir, 'logs', 'exploration_log_all.csv')
+        self.output_file_path = os.path.join(package_dir, 'logs', 'exploration_log_test.csv')
         os.makedirs(os.path.join(package_dir, 'logs'), exist_ok=True)
 
         self.csv_file = open(self.output_file_path, 'w', newline='')
@@ -154,24 +158,40 @@ class MapLoggerNode(Node):
     def timer_callback(self):
         if self.tb_map_data is None or self.human_map_data is None or self.merged_map_data is None:
             if self.tb_map_data is None:
-                self.get_logger().info("Waiting for TB map...")
+                if self.only_tb or self.both:
+                    self.get_logger().info("Waiting for TB map...")
+                    return
             if self.human_map_data is None:
-                self.get_logger().info("Waiting for Human map...")
+                if self.only_human or self.both:
+                    self.get_logger().info("Waiting for Human map...")
+                    return
             if self.merged_map_data is None:
-                self.get_logger().info("Waiting for Merged map...")
-            return
-
-        human_explored_cells = sum(1 for cell in self.human_map_data.data if cell != -1)
-        tb_explored_cells = sum(1 for cell in self.tb_map_data.data if cell != -1)
-        merged_explored_cells = sum(1 for cell in self.merged_map_data.data if cell != -1)
+                if self.both:
+                    self.get_logger().info("Waiting for Merged map...")
+                    return
+                
+        if self.only_tb:
+            tb_explored_cells = sum(1 for cell in self.tb_map_data.data if cell != -1)
+            merged_explored_cells = 0
+            human_explored_cells = 0
+            self.human_trajectory_length = 0
+        elif self.only_human:
+            tb_explored_cells = 0
+            merged_explored_cells = 0
+            human_explored_cells = sum(1 for cell in self.human_map_data.data if cell != -1)
+            self.tb_trajectory_length = 0
+        else:
+            human_explored_cells = sum(1 for cell in self.human_map_data.data if cell != -1)
+            tb_explored_cells = sum(1 for cell in self.tb_map_data.data if cell != -1)
+            merged_explored_cells = sum(1 for cell in self.merged_map_data.data if cell != -1)
         elapsed_time = (self.get_clock().now() - self.start_time).nanoseconds / 1e9
 
         self.csv_writer.writerow([elapsed_time, tb_explored_cells, self.tb_trajectory_length, human_explored_cells, self.human_trajectory_length, merged_explored_cells])
         self.csv_file.flush()
 
-        self.get_logger().info(
-            f"Time: {elapsed_time:.1f}s | Explored: {merged_explored_cells}"
-        )
+        # self.get_logger().info(
+        #     f"Time: {elapsed_time:.1f}s | Explored: {merged_explored_cells}"
+        # )
 
     def destroy_node(self):
         self.csv_file.close()

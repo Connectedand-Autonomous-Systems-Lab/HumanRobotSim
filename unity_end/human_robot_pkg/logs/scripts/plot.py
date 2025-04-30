@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 
-csv_path = os.path.expanduser('/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg/logs/exploration_log_all.csv')
+csv_path = os.path.expanduser('/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg/logs/exploration_log_robot_only.csv')
 
 df = pd.read_csv(csv_path)
 df.columns = df.columns.str.strip()  # Clean headers just in case

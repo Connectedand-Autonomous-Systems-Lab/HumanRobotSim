@@ -33,6 +33,7 @@ setup(
             'odom_pub = human_robot_pkg.odom_publisher:main',
             'image_visualiser = human_robot_pkg.image_subscriber:main',
             'point_to_nav_goal = human_robot_pkg.point_to_nav_goal:main',
+            'scan_limiter = human_robot_pkg.scan_limiter:main',
         ],
     },
 )

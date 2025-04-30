@@ -82,7 +82,7 @@ def generate_launch_description():
             # map_logger,
             # human_bag,
             explore,
-            # point_to_nav_goal
+            point_to_nav_goal
             ]
     )
 
@@ -91,6 +91,6 @@ def generate_launch_description():
         # odom_pub,
         delayed_nodes,
         # simple_navigator,
-        # map_logger,
+        map_logger,
         # human_bag
     })
