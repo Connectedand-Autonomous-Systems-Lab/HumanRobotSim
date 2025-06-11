@@ -4,6 +4,7 @@ from launch.actions import IncludeLaunchDescription, GroupAction, DeclareLaunchA
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from ament_index_python.packages import get_package_share_directory
 from launch_ros.actions import Node, PushRosNamespace
+from launch.substitutions import LaunchConfiguration
 
 def generate_launch_description():
     package_name = 'human_robot_pkg'
@@ -155,6 +156,12 @@ def generate_launch_description():
         }.items()
     )   
 
+    slam_toolbox_altered_map = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join( os.path.join(get_package_share_directory('human_robot_pkg'), 'launch', 'slam_altered_map.launch.py')
+        )
+    )   )
+
     human_map_to_map = Node(
             package='tf2_ros',
             executable='static_transform_publisher',
@@ -184,7 +191,7 @@ def generate_launch_description():
     )
     
     human_bag = ExecuteProcess(
-            cmd=['ros2', 'bag', 'play', '/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg/rosbag/lidar_experiment'],
+            cmd=['ros2', 'bag', 'play', '/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg/rosbag/odom scan tf only/1', '--topics', '/human/scan', '/tf'],
             output='screen'
         )
     
@@ -198,21 +205,27 @@ def generate_launch_description():
         executable="scan_limiter"
     )
 
+    map_logger = Node(
+        package="human_robot_pkg",
+        executable="map_logger"
+    )
+
     return LaunchDescription({
-        # ros_tcp_endpoint,
+        ros_tcp_endpoint,
         rviz2,
         # frontier_pub,
         # navigation_tb3_0,
         # slam_toolbox_tb3_0,
-        # slam_toolbox,
+        slam_toolbox,
+        # slam_toolbox_altered_map,
         # custom_nav2_bringup,
         # nav2_bringup_tb3_0,
         # nav2_bringup_tb3_0_pushed,
         
         slam_toolbox_human,
-        # map_merge,
-        # human_map_to_map,
-        # tb3_0_map_to_map,
+        map_merge,
+        human_map_to_map,
+        tb3_0_map_to_map,
         
         # params
         # nav2_nodes
@@ -220,7 +233,8 @@ def generate_launch_description():
         # delayed_navigation,
         # simple_navigator,
         
-        human_bag,
-        scan_limiter
-        # odom_pub
+        # human_bag,
+        # scan_limiter,
+        # map_logger,
+        odom_pub
     })

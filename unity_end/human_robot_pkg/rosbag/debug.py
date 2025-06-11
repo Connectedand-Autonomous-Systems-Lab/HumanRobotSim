@@ -8,7 +8,7 @@ class LidarCounter(Node):
         super().__init__('lidar_counter')
         self.subscription = self.create_subscription(
             LaserScan,
-            '/human/scan_cropped',  # Replace with your LiDAR topic if different
+            '/human/scan',  # Replace with your LiDAR topic if different
             self.lidar_callback,
             10
         )

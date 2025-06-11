@@ -27,16 +27,22 @@ class MapMerger(Node):
         # Store maps
         self.map1 = None
         self.map2 = None
+        self.prev_map1_hash = None
+        self.prev_map2_hash = None
 
     def map1_callback(self, msg):
-        # self.get_logger().info('Received human map')
-        self.map1 = msg
-        self.try_merge_maps()
+        new_hash = hashlib.md5(bytes(msg.data)).hexdigest()
+        if new_hash != self.prev_map1_hash:
+            self.prev_map1_hash = new_hash
+            self.map1 = msg
+            self.try_merge_maps()
 
     def map2_callback(self, msg):
-        # self.get_logger().info('Received tb3_0 map')
-        self.map2 = msg
-        self.try_merge_maps()
+        new_hash = hashlib.md5(bytes(msg.data)).hexdigest()
+        if new_hash != self.prev_map2_hash:
+            self.prev_map2_hash = new_hash
+            self.map2 = msg
+            self.try_merge_maps()
 
     def try_merge_maps(self):
         if self.map1 and self.map2:

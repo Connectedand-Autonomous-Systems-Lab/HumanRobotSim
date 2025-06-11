@@ -67,15 +67,15 @@ class MapLoggerNode(Node):
         self.merged_map_data = None
         self.save_map = False
 
-        self.only_tb = True
+        self.only_tb = False
         self.only_human = False
-        self.both = False
+        self.both = True
         # self.start_time = None
 
         # Setup persistent CSV file object
         package_src_dir = os.path.dirname(os.path.realpath(__file__))
         package_dir = os.path.abspath(os.path.join(package_src_dir, '..'))
-        self.output_file_path = os.path.join(package_dir, 'logs', 'exploration_log_test.csv')
+        self.output_file_path = os.path.join(package_dir, 'logs', 'exploration_log_merged.csv')
         os.makedirs(os.path.join(package_dir, 'logs'), exist_ok=True)
 
         self.csv_file = open(self.output_file_path, 'w', newline='')

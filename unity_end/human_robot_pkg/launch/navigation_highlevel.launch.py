@@ -46,7 +46,7 @@ def generate_launch_description():
     )
 
     human_bag = ExecuteProcess(
-            cmd=['ros2', 'bag', 'play', '/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg/rosbag/odom scan tf only/1'],
+            cmd=['ros2', 'bag', 'play', '/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg/rosbag/odom scan tf only/1', '--topics', '/human/scan', '/tf'],
             output='screen'
         )
 
@@ -80,9 +80,9 @@ def generate_launch_description():
             move3,
             # simple_navigator,
             # map_logger,
-            # human_bag,
-            explore,
-            point_to_nav_goal
+            human_bag,
+            # explore,
+            # point_to_nav_goal
             ]
     )
 
@@ -92,5 +92,5 @@ def generate_launch_description():
         delayed_nodes,
         # simple_navigator,
         map_logger,
-        # human_bag
+        # human_bag,
     })
