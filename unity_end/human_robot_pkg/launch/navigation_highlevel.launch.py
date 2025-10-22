@@ -46,7 +46,7 @@ def generate_launch_description():
     )
 
     human_bag = ExecuteProcess(
-            cmd=['ros2', 'bag', 'play', '/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg/rosbag/odom scan tf only/1', '--topics', '/human/scan', '/tf'],
+            cmd=['ros2', 'bag', 'play', '/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg/rosbag/with_detection/maze1', '--topics', '/human/scan', '/tf', '/detection'],
             output='screen'
         )
 

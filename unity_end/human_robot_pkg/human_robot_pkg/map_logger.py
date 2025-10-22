@@ -1,6 +1,7 @@
 import rclpy
 from rclpy.node import Node
 from nav_msgs.msg import OccupancyGrid, Odometry
+from std_msgs.msg import String 
 from geometry_msgs.msg import PoseWithCovarianceStamped, PoseStamped
 import math
 import csv
@@ -53,6 +54,20 @@ class MapLoggerNode(Node):
             10
         )
 
+        self.human_det_sub = self.create_subscription(
+            String,
+            'detection',
+            self.human_detection_callback,
+            10
+        )
+
+        self.tb3_det_sub = self.create_subscription(
+            String,
+            'tb3/detection',
+            self.tb3_detection_callback,
+            10
+        )
+
         self.timer = self.create_timer(1.0, self.timer_callback)
         self.start_time = self.get_clock().now()
 
@@ -72,6 +87,10 @@ class MapLoggerNode(Node):
         self.both = True
         # self.start_time = None
 
+        self.human_detection_list  = []
+        self.tb3_detection_list  = []
+        self.total_detections_list = []
+
         # Setup persistent CSV file object
         package_src_dir = os.path.dirname(os.path.realpath(__file__))
         package_dir = os.path.abspath(os.path.join(package_src_dir, '..'))
@@ -80,7 +99,7 @@ class MapLoggerNode(Node):
 
         self.csv_file = open(self.output_file_path, 'w', newline='')
         self.csv_writer = csv.writer(self.csv_file)
-        self.csv_writer.writerow(['Time Elapsed (s)', 'tb exploration', 'tb trajectory', 'human exploration', 'human trajectory', 'merged exploration'])
+        self.csv_writer.writerow(['Time Elapsed (s)', 'tb exploration', 'tb trajectory', 'human exploration', 'human trajectory', 'merged exploration', 'human detections', 'tb3 detections', 'total detections'])
 
         self.get_logger().info(f"Logging started: {self.output_file_path}")
 
@@ -186,12 +205,23 @@ class MapLoggerNode(Node):
             merged_explored_cells = sum(1 for cell in self.merged_map_data.data if cell != -1)
         elapsed_time = (self.get_clock().now() - self.start_time).nanoseconds / 1e9
 
-        self.csv_writer.writerow([elapsed_time, tb_explored_cells, self.tb_trajectory_length, human_explored_cells, self.human_trajectory_length, merged_explored_cells])
+        self.total_detections_list = list(set(self.human_detection_list+self.tb3_detection_list))
+        self.get_logger().info(f"Human: {self.human_detection_list}  tb3: {self.tb3_detection_list}  total: {self.total_detections_list}")
+
+        self.csv_writer.writerow([elapsed_time, tb_explored_cells, self.tb_trajectory_length, human_explored_cells, self.human_trajectory_length, merged_explored_cells, len(self.human_detection_list), len(self.tb3_detection_list), len(self.total_detections_list)])
         self.csv_file.flush()
 
         # self.get_logger().info(
         #     f"Time: {elapsed_time:.1f}s | Explored: {merged_explored_cells}"
         # )
+
+    def human_detection_callback(self, msg):
+        if msg.data not in self.human_detection_list:
+            self.human_detection_list.append(msg.data)
+
+    def tb3_detection_callback(self, msg):
+        if msg.data not in self.tb3_detection_list:
+            self.tb3_detection_list.append(msg.data)
 
     def destroy_node(self):
         self.csv_file.close()
