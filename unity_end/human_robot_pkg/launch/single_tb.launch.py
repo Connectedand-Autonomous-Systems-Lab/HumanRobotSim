@@ -46,7 +46,7 @@ def generate_launch_description():
                         #   'namespace': 'tb3_0',
                         #   'use_namespace': 'True',
                           'use_sim_time': 'True',
-                          'params_file': os.path.join(bringup_dir, 'params', 'nav2_params.yaml'),
+                          'params_file': os.path.join(package_dir, 'config', 'nav2_params.yaml'),
                         #   'params_file': os.path.join(get_package_share_directory('human_robot_pkg'), 'config', 'nav2_params.yaml'),
                         #   'autostart': 'True',
                         #   'use_composition': 'True',
@@ -117,11 +117,15 @@ def generate_launch_description():
         }.items()
     )
 
-    slam_toolbox= IncludeLaunchDescription(
+    slam_toolbox = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(get_package_share_directory('slam_toolbox'), 'launch', 'online_async_launch.py')
-        )
-    )
+        ),
+        launch_arguments={
+            'use_sim_time': 'true',
+            'slam_params_file': os.path.join(get_package_share_directory('human_robot_pkg'), 'config', 'robot.yaml'),
+        }.items()
+    )   
 
     human_map_to_map = Node(
             package='tf2_ros',

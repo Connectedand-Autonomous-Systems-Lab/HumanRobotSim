@@ -94,7 +94,7 @@ class MapLoggerNode(Node):
         # Setup persistent CSV file object
         package_src_dir = os.path.dirname(os.path.realpath(__file__))
         package_dir = os.path.abspath(os.path.join(package_src_dir, '..'))
-        self.output_file_path = os.path.join(package_dir, 'logs', 'exploration_log_merged.csv')
+        self.output_file_path = os.path.join(package_dir, 'logs', 'exploration_log_merged_simple_robot.csv')
         os.makedirs(os.path.join(package_dir, 'logs'), exist_ok=True)
 
         self.csv_file = open(self.output_file_path, 'w', newline='')

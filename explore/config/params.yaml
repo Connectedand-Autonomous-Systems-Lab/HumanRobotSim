@@ -1,8 +1,8 @@
 /**:
   ros__parameters:
-    robot_base_frame: base_link
+    robot_base_frame: Robot
     return_to_init: false
-    costmap_topic: merged_map
+    costmap_topic: map
     costmap_updates_topic: map_updates
     visualize: true
     planner_frequency: 0.15

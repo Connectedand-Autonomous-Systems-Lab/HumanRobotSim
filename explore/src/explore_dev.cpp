@@ -104,6 +104,7 @@ Explore::Explore()
   
   target_point_pub_ = this->create_publisher<geometry_msgs::msg::PointStamped>("target_point", 10);
 
+  RCLCPP_INFO(logger_, "This is the dev explore node.");
   RCLCPP_INFO(logger_, "Waiting to connect to move_base nav2 server");
   move_base_client_->wait_for_action_server();
   RCLCPP_INFO(logger_, "Connected to move_base nav2 server");
@@ -258,11 +259,12 @@ void Explore::visualizeFrontiers(
 void Explore::makePlan()
 {
   // find frontiers
+  RCLCPP_INFO(logger_, "Making new plan");
   auto pose = costmap_client_.getRobotPose();
   auto human_pose = costmap_client_.getHumanPose();
   // get frontiers sorted according to cost
   auto frontiers = search_.searchFrom(pose.position, human_pose.position);
-  RCLCPP_DEBUG(logger_, "found %lu frontiers", frontiers.size());
+  RCLCPP_INFO(logger_, "found %lu frontiers", frontiers.size());
   for (size_t i = 0; i < frontiers.size(); ++i) {
     RCLCPP_DEBUG(logger_, "frontier %zd cost: %f and distance: %f", i, frontiers[i].cost, frontiers[i].min_distance);
     // RCLCPP_INFO(logger_, "Frontier %d closeto: %d", i, frontiers[i].closeto);
@@ -329,7 +331,7 @@ void Explore::makePlan()
     return;
   }
 
-  RCLCPP_DEBUG(logger_, "Sending goal to move base nav2");
+  RCLCPP_INFO(logger_, "Sending goal to move base nav2");
 
   // send goal to move_base if we have something new to pursue
   auto goal = nav2_msgs::action::NavigateToPose::Goal();

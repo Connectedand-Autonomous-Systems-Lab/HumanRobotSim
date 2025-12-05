@@ -63,7 +63,9 @@ protected:
    */
   Frontier buildNewFrontier(unsigned int initial_cell,
     unsigned int reference,
-    std::vector<bool>& frontier_flag);
+    std::vector<bool>& frontier_flag,
+    const geometry_msgs::msg::Point& human_position,
+    const geometry_msgs::msg::Point& robot_position);
 
   /**
    * @brief isNewFrontierCell Evaluate if candidate cell is a valid candidate

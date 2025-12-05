@@ -215,7 +215,7 @@ def getFrontier(pose, costmap, logger):
 class FrontierPublisher(Node):
     def __init__(self):
         super().__init__(node_name='frontier_publisher')
-        self.costmapSub = self.create_subscription(OccupancyGrid, namespace + '/merged_map', self.occupancyGridCallback, 1)
+        self.costmapSub = self.create_subscription(OccupancyGrid, namespace + '/map', self.occupancyGridCallback, 1)
         self.model_pose_sub = self.create_subscription(PoseWithCovarianceStamped, namespace + '/pose', self.poseCallback, 1)
         self.frontierPub = self.create_publisher(PoseArray, namespace + '/frontiers', 10)
         self.get_logger().info('Running Waypoint Test')

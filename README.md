@@ -16,6 +16,8 @@ Finally,
 ros2 launch explore_lite explore.launch.py
 ```
 
+If you want to test the experimental “dev” explorer (which considers human pose information when picking frontiers) build and launch `explore_dev.cpp` / `frontier_search_dev.cpp` via the `explore_dev.launch.py` file instead; otherwise the standard launch described above ignores the human pose topic entirely.
+
 # RL training
 
 

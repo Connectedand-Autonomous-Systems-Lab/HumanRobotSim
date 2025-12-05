@@ -77,10 +77,16 @@ install(DIRECTORY
 )
 
 
+# add_executable(explore
+#   src/costmap_client_dev.cpp
+#   src/explore_dev.cpp
+#   src/frontier_search_dev.cpp
+# )
+
 add_executable(explore
-  src/costmap_client_dev.cpp
-  src/explore_dev.cpp
-  src/frontier_search_dev.cpp
+  src/costmap_client.cpp
+  src/explore.cpp
+  src/frontier_search.cpp
 )
 
 target_include_directories(explore PUBLIC

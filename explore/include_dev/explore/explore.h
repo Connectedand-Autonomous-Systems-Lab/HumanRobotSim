@@ -96,7 +96,9 @@ private:
   //  * @brief  Publish a frontiers as markers
   //  */
   void visualizeFrontiers(
-      const std::vector<frontier_exploration::Frontier>& frontiers);
+      const std::vector<frontier_exploration::Frontier>& frontiers, 
+      const geometry_msgs::msg::Point& robot_position,
+      const geometry_msgs::msg::Point& human_position);
 
   bool goalOnBlacklist(const geometry_msgs::msg::Point& goal);
 

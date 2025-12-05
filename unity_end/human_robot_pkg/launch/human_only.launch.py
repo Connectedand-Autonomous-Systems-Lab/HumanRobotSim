@@ -24,7 +24,7 @@ def generate_launch_description():
         package='rviz2',
         executable='rviz2',
         output='screen',
-        arguments=['-d', 'src/DRL-exploration/unity_end/human_robot_pkg/rviz/human_robot.rviz', '--ros-args', '--log-level', 'fatal'],
+        arguments=['-d', 'src/DRL-exploration/unity_end/human_robot_pkg/rviz/human_only.rviz', '--ros-args', '--log-level', 'fatal'],
         parameters=[{'use_sim_time':True}]
     )
 
@@ -152,7 +152,7 @@ def generate_launch_description():
         ),
         launch_arguments={
             'use_sim_time': 'true',
-            'slam_params_file': os.path.join(get_package_share_directory('human_robot_pkg'), 'config', 'robot.yaml'),
+            'slam_params_file': os.path.join(get_package_share_directory('human_robot_pkg'), 'config', 'mapper_params_online_async.yaml'),
         }.items()
     )   
 
@@ -213,28 +213,7 @@ def generate_launch_description():
     return LaunchDescription({
         ros_tcp_endpoint,
         rviz2,
-        frontier_pub,
-        # navigation_tb3_0,
-        # slam_toolbox_tb3_0,
-        slam_toolbox,
-        # slam_toolbox_altered_map,
-        # custom_nav2_bringup,
-        # nav2_bringup_tb3_0,
-        # nav2_bringup_tb3_0_pushed,
         
-        slam_toolbox_human,
-        map_merge,
-        human_map_to_map,
-        tb3_0_map_to_map,
-        
-        # params
-        # nav2_nodes
-        # navigation,
-        # delayed_navigation,
-        # simple_navigator,
-        
-        # human_bag,
-        # scan_limiter,
-        # map_logger,
-        # odom_pub
+        # slam_toolbox_human,
+    
     })

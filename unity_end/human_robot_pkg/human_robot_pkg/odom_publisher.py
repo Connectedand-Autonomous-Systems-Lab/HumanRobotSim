@@ -32,7 +32,7 @@ class OdomPublisherNode(Node):
         self.get_logger().info("OdomPublisherNode started. Publishing robot and human odometry...")
 
     def timer_callback(self):
-        self.publish_pose('odom', 'base_footprint', self.robot_pub, '/odom')
+        self.publish_pose('odom', 'Robot', self.robot_pub, '/odom')
         self.publish_pose('human/odom', 'human/base_footprint', self.human_pub, '/human/odom')
 
     def publish_pose(self, parent_frame, child_frame, publisher, topic_name):

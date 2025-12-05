@@ -52,7 +52,13 @@ def generate_launch_description():
 
     move_simple = [
         'ros2', 'topic', 'pub', '/cmd_vel', 'geometry_msgs/Twist',
-        "{linear: {x: 2.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}",
+        "{linear: {x: 0.2, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}",
+        '-1'
+    ]
+
+    stop_simple = [
+        'ros2', 'topic', 'pub', '/cmd_vel', 'geometry_msgs/Twist',
+        "{linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}",
         '-1'
     ]
 
@@ -69,6 +75,7 @@ def generate_launch_description():
     move1 = ExecuteProcess(cmd=move_simple, output='screen')
     move2 = TimerAction(period=2.0, actions=[ExecuteProcess(cmd=move_simple, output='screen')])
     move3 = TimerAction(period=4.0, actions=[ExecuteProcess(cmd=move_simple, output='screen')])
+    stop = TimerAction(period=2.0, actions=[ExecuteProcess(cmd=stop_simple, output='screen')])
 
         
     delayed_nodes = TimerAction(
@@ -76,8 +83,9 @@ def generate_launch_description():
         actions=[
             # navigation,
             move1,
-            move2,
-            move3,
+            stop,
+            # move2,
+            # move3,
             # simple_navigator,
             # map_logger,
             human_bag,
