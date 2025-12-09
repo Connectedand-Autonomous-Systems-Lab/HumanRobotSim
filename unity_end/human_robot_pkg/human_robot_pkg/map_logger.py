@@ -25,7 +25,7 @@ class MapLoggerNode(Node):
 
 
         self.human_pose_sub = self.create_subscription(
-            PoseStamped,
+            Odometry,
             'human/odom',
             self.human_pose_callback,
             10
@@ -41,7 +41,7 @@ class MapLoggerNode(Node):
 
 
         self.tb_pose_sub = self.create_subscription(
-            PoseStamped,
+            Odometry,
             'odom',
             self.tb_pose_callback,
             10
@@ -94,7 +94,7 @@ class MapLoggerNode(Node):
         # Setup persistent CSV file object
         package_src_dir = os.path.dirname(os.path.realpath(__file__))
         package_dir = os.path.abspath(os.path.join(package_src_dir, '..'))
-        self.output_file_path = os.path.join(package_dir, 'logs', 'exploration_log_merged_simple_robot.csv')
+        self.output_file_path = os.path.join(package_dir, 'logs/user_study', 'concord_600.csv')
         os.makedirs(os.path.join(package_dir, 'logs'), exist_ok=True)
 
         self.csv_file = open(self.output_file_path, 'w', newline='')
@@ -107,7 +107,7 @@ class MapLoggerNode(Node):
         self.human_map_data = msg
 
     def human_pose_callback(self, msg):
-        pose = msg.pose
+        pose = msg.pose.pose
         x, y = pose.position.x, pose.position.y
         # self.get_logger().info("inside pose callback")
         # self.get_logger().info(f"odom x: {x} y:{y}")
@@ -123,7 +123,7 @@ class MapLoggerNode(Node):
         self.tb_map_data = msg
 
     def tb_pose_callback(self, msg):
-        pose = msg.pose
+        pose = msg.pose.pose
         x, y = pose.position.x, pose.position.y
         # self.get_logger().info("inside pose callback")
         # self.get_logger().info(f"odom x: {x} y:{y}")

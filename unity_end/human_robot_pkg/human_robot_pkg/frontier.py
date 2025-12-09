@@ -1,5 +1,6 @@
 import sys
 import time
+from collections import deque
 
 from action_msgs.msg import GoalStatus
 from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped, PoseArray, Pose
@@ -18,12 +19,14 @@ from rclpy.qos import QoSProfile
 
 from enum import Enum
 
-import numpy as np
-
 import math
 
-OCC_THRESHOLD = 10
 MIN_FRONTIER_SIZE = 5
+# Parameters that mirror explore_lite cost computation
+POTENTIAL_SCALE = 4000.0
+GAIN_SCALE = 2.0
+DEFAULT_MAX_FRONTIER_DISTANCE = 0  # meters; 0 disables filtering
+DEFAULT_MIN_WALL_DISTANCE = 0.5  # meters; 0 disables filtering
 
 namespace = ""
 
@@ -70,164 +73,204 @@ class OccupancyGrid2d():
     def __getIndex(self, mx, my):
         return my * self.map.info.width + mx
 
-class FrontierPoint():
-    def __init__(self, x, y):
-        self.classification = 0
-        self.mapX = x
-        self.mapY = y
+def _index_to_cells(idx, width):
+    return idx % width, idx // width
 
-class FrontierCache():
-    cache = {}
 
-    def getPoint(self, x, y):
-        idx = self.__cantorHash(x, y)
-
-        if idx in self.cache:
-            return self.cache[idx]
-
-        self.cache[idx] = FrontierPoint(x, y)
-        return self.cache[idx]
-
-    def __cantorHash(self, x, y):
-        return (((x + y) * (x + y + 1)) / 2) + y
-
-    def clear(self):
-        self.cache = {}
-
-class PointClassification(Enum):
-    MapOpen = 1
-    MapClosed = 2
-    FrontierOpen = 4
-    FrontierClosed = 8
-
-def findFree(mx, my, costmap):
-    fCache = FrontierCache()
-
-    bfs = [fCache.getPoint(mx, my)]  
-
-    while len(bfs) > 0:
-        loc = bfs.pop(0)
-
-        if costmap.getCost(loc.mapX, loc.mapY) == OccupancyGrid2d.CostValues.FreeSpace.value:
-            return (loc.mapX, loc.mapY)
-
-        for n in getNeighbors(loc, costmap, fCache):
-            if n.classification & PointClassification.MapClosed.value == 0:
-                n.classification = n.classification | PointClassification.MapClosed.value
-                bfs.append(n)
-
-    return (mx, my)
-
-def getNeighbors(point, costmap, fCache):
+def _nhood4(idx, width, height):
+    """Return 4-connected neighbor indices for a cell index."""
+    x, y = _index_to_cells(idx, width)
     neighbors = []
-
-    for x in range(point.mapX - 1, point.mapX + 2):
-        for y in range(point.mapY - 1, point.mapY + 2):
-            if (x > 0 and x < costmap.getSizeX() and y > 0 and y < costmap.getSizeY()):
-                neighbors.append(fCache.getPoint(x, y))
-
+    if x > 0:
+        neighbors.append(idx - 1)
+    if x + 1 < width:
+        neighbors.append(idx + 1)
+    if y > 0:
+        neighbors.append(idx - width)
+    if y + 1 < height:
+        neighbors.append(idx + width)
     return neighbors
 
-def centroid(arr):
-    arr = np.array(arr)
-    length = arr.shape[0]
-    sum_x = np.sum(arr[:, 0])
-    sum_y = np.sum(arr[:, 1])
-    return sum_x/length, sum_y/length
 
-def isFrontierPoint(point, costmap, fCache):
-    if costmap.getCost(point.mapX, point.mapY) != OccupancyGrid2d.CostValues.NoInformation.value:
+def _nhood8(idx, width, height):
+    """Return 8-connected neighbor indices for a cell index."""
+    x, y = _index_to_cells(idx, width)
+    neighbors = []
+    for dy in (-1, 0, 1):
+        for dx in (-1, 0, 1):
+            if dx == 0 and dy == 0:
+                continue
+            nx = x + dx
+            ny = y + dy
+            if 0 <= nx < width and 0 <= ny < height:
+                neighbors.append(ny * width + nx)
+    return neighbors
+
+
+def _nearest_free_cell(start_idx, map_data, width, height):
+    """Find the closest free cell to seed the BFS, mirroring Explore Lite."""
+    queue = deque([start_idx])
+    visited = {start_idx}
+    while queue:
+        idx = queue.popleft()
+        if map_data[idx] == OccupancyGrid2d.CostValues.FreeSpace.value:
+            return idx
+        for nbr in _nhood4(idx, width, height):
+            if nbr not in visited:
+                visited.add(nbr)
+                queue.append(nbr)
+    return start_idx
+
+
+def _is_new_frontier_cell(idx, map_data, frontier_flag, width, height):
+    if map_data[idx] != OccupancyGrid2d.CostValues.NoInformation.value or frontier_flag[idx]:
         return False
+    for nbr in _nhood4(idx, width, height):
+        if map_data[nbr] == OccupancyGrid2d.CostValues.FreeSpace.value:
+            return True
+    return False
 
-    hasFree = False
-    for n in getNeighbors(point, costmap, fCache):
-        cost = costmap.getCost(n.mapX, n.mapY)
 
-        if cost > OCC_THRESHOLD:
-            return False
+def _is_near_wall(idx, map_data, width, height, min_clearance_cells):
+    if not min_clearance_cells or min_clearance_cells <= 0.0:
+        return False
+    radius = int(math.ceil(min_clearance_cells))
+    x, y = _index_to_cells(idx, width)
+    for dy in range(-radius, radius + 1):
+        for dx in range(-radius, radius + 1):
+            nx = x + dx
+            ny = y + dy
+            if nx < 0 or ny < 0 or nx >= width or ny >= height:
+                continue
+            if math.hypot(dx, dy) > min_clearance_cells:
+                continue
+            neighbor_idx = ny * width + nx
+            if map_data[neighbor_idx] >= OccupancyGrid2d.CostValues.InscribedInflated.value:
+                return True
+    return False
 
-        if cost == OccupancyGrid2d.CostValues.FreeSpace.value:
-            hasFree = True
 
-    return hasFree
+def _world_coords(costmap, idx):
+    mx, my = _index_to_cells(idx, costmap.getSizeX())
+    return costmap.mapToWorld(mx, my)
 
-def getFrontier(pose, costmap, logger):
-    fCache = FrontierCache()
 
-    fCache.clear()
+def _build_new_frontier(initial_idx, costmap, frontier_flag, map_data, width, height, robot_x, robot_y):
+    """Flood-fill an entire frontier cluster, compute centroid and robot distance."""
+    queue = deque([initial_idx])
+    centroid_x = 0.0
+    centroid_y = 0.0
+    size = 0
+    frontier_flag[initial_idx] = True
+    min_distance = float('inf')
 
-    # print("inside get frontier")
-    mx, my = costmap.worldToMap(pose.position.x, pose.position.y)
+    while queue:
+        idx = queue.popleft()
+        wx, wy = _world_coords(costmap, idx)
+        centroid_x += wx
+        centroid_y += wy
+        size += 1
 
-    freePoint = findFree(mx, my, costmap)
-    start = fCache.getPoint(freePoint[0], freePoint[1])
-    start.classification = PointClassification.MapOpen.value
-    mapPointQueue = [start]
+        distance = math.hypot(robot_x - wx, robot_y - wy)
+        if distance < min_distance:
+            min_distance = distance
+
+        for nbr in _nhood8(idx, width, height):
+            if _is_new_frontier_cell(nbr, map_data, frontier_flag, width, height):
+                frontier_flag[nbr] = True
+                queue.append(nbr)
+
+    return (centroid_x / size, centroid_y / size), size, min_distance
+
+
+def _frontier_cost(min_distance, size, resolution):
+    """Calculate cost using same formulation as frontier_search.cpp."""
+    covered_distance = max(min_distance, 0.0)
+    covered_size = max(size, 1)
+    return (POTENTIAL_SCALE * covered_distance * resolution) - (GAIN_SCALE * covered_size * resolution)
+
+
+def getFrontier(pose, costmap, logger, max_frontier_distance=None, min_wall_distance=None):
+    width = costmap.getSizeX()
+    height = costmap.getSizeY()
+    total_cells = width * height
+    # Copy occupancy data once so repeated indexing stays in C lists
+    map_data = list(costmap.map.data)
+
+    try:
+        mx, my = costmap.worldToMap(pose.position.x, pose.position.y)
+    except Exception as exc:
+        logger.warn(f"Robot pose outside map bounds: {exc}")
+        return []
+
+    robot_x, robot_y = costmap.mapToWorld(mx, my)
+    start_idx = my * width + mx
+    clear_idx = _nearest_free_cell(start_idx, map_data, width, height)
+
+    visited_flag = [False] * total_cells
+    frontier_flag = [False] * total_cells
+
+    bfs = deque([clear_idx])
+    visited_flag[clear_idx] = True
 
     frontiers = []
+    resolution = costmap.map.info.resolution
 
-    while len(mapPointQueue) > 0:
-        p = mapPointQueue.pop(0)
+    min_wall_clearance_cells = (min_wall_distance / resolution) if (min_wall_distance and min_wall_distance > 0.0) else 0.0
 
-        if p.classification & PointClassification.MapClosed.value != 0:
-            continue
+    while bfs:
+        idx = bfs.popleft()
 
-        if isFrontierPoint(p, costmap, fCache):
-            p.classification = p.classification | PointClassification.FrontierOpen.value
-            frontierQueue = [p]
-            newFrontier = []
-
-            while len(frontierQueue) > 0:
-                q = frontierQueue.pop(0)
-
-                if q.classification & (PointClassification.MapClosed.value | PointClassification.FrontierClosed.value) != 0:
+        for nbr in _nhood4(idx, width, height):
+            if not visited_flag[nbr] and map_data[nbr] <= map_data[idx]:
+                visited_flag[nbr] = True
+                bfs.append(nbr)
+            elif _is_new_frontier_cell(nbr, map_data, frontier_flag, width, height):
+                wx, wy = _world_coords(costmap, nbr)
+                if max_frontier_distance is not None and math.hypot(robot_x - wx, robot_y - wy) > max_frontier_distance:
                     continue
+                if min_wall_clearance_cells and _is_near_wall(nbr, map_data, width, height, min_wall_clearance_cells):
+                    continue
+                frontier_flag[nbr] = True
+                centroid, size, min_distance = _build_new_frontier(
+                    nbr,
+                    costmap,
+                    frontier_flag,
+                    map_data,
+                    width,
+                    height,
+                    robot_x,
+                    robot_y
+                )
+                if size >= MIN_FRONTIER_SIZE:
+                    cost = _frontier_cost(min_distance, size, resolution)
+                    frontiers.append((cost, centroid))
 
-                if isFrontierPoint(q, costmap, fCache):
-                    newFrontier.append(q)
-
-                    for w in getNeighbors(q, costmap, fCache):
-                        if w.classification & (PointClassification.FrontierOpen.value | PointClassification.FrontierClosed.value | PointClassification.MapClosed.value) == 0:
-                            w.classification = w.classification | PointClassification.FrontierOpen.value
-                            frontierQueue.append(w)
-
-                q.classification = q.classification | PointClassification.FrontierClosed.value
-
-            
-            newFrontierCords = []
-            for x in newFrontier:
-                x.classification = x.classification | PointClassification.MapClosed.value
-                newFrontierCords.append(costmap.mapToWorld(x.mapX, x.mapY))
-
-            if len(newFrontier) > MIN_FRONTIER_SIZE:
-                frontiers.append(centroid(newFrontierCords))
-
-        for v in getNeighbors(p, costmap, fCache):
-            if v.classification & (PointClassification.MapOpen.value | PointClassification.MapClosed.value) == 0:
-                if any(costmap.getCost(x.mapX, x.mapY) == OccupancyGrid2d.CostValues.FreeSpace.value for x in getNeighbors(v, costmap, fCache)):
-                    v.classification = v.classification | PointClassification.MapOpen.value
-                    mapPointQueue.append(v)
-
-        p.classification = p.classification | PointClassification.MapClosed.value
-
-    return frontiers
+    frontiers.sort(key=lambda entry: entry[0])
+    return [centroid for _, centroid in frontiers]
      
 class FrontierPublisher(Node):
     def __init__(self):
         super().__init__(node_name='frontier_publisher')
-        self.costmapSub = self.create_subscription(OccupancyGrid, namespace + '/map', self.occupancyGridCallback, 1)
-        self.model_pose_sub = self.create_subscription(PoseWithCovarianceStamped, namespace + '/pose', self.poseCallback, 1)
+        self.costmapSub = self.create_subscription(OccupancyGrid, namespace + '/merged_map', self.occupancyGridCallback, 1)
+        self.odom_sub = self.create_subscription(Odometry, namespace + '/odom', self.poseCallback, 1)
         self.frontierPub = self.create_publisher(PoseArray, namespace + '/frontiers', 10)
         self.get_logger().info('Running Waypoint Test')
         self.initial_pose_received = False
         self.initial_map_received = False
+        self.declare_parameter('max_frontier_distance', DEFAULT_MAX_FRONTIER_DISTANCE)
+        self.max_frontier_distance = float(self.get_parameter('max_frontier_distance').value)
+        self.declare_parameter('min_wall_distance', DEFAULT_MIN_WALL_DISTANCE)
+        self.min_wall_distance = float(self.get_parameter('min_wall_distance').value)
 
     def occupancyGridCallback(self, msg):
         # self.get_logger().info("Got map")
         self.costmap = OccupancyGrid2d(msg)
         self.initial_map_received = True
         if self.initial_pose_received and self.initial_map_received:
-            frontiers = getFrontier(self.currentPose, self.costmap, self.get_logger())
+            distance_limit = self.max_frontier_distance if self.max_frontier_distance > 0.0 else None
+            wall_limit = self.min_wall_distance if self.min_wall_distance > 0.0 else None
+            frontiers = getFrontier(self.currentPose, self.costmap, self.get_logger(), distance_limit, wall_limit)
             pose_array = PoseArray()
             pose_array.header.stamp = self.get_clock().now().to_msg()
             pose_array.header.frame_id =   'map'
@@ -239,9 +282,8 @@ class FrontierPublisher(Node):
                 pose_array.poses.append(pose)
             self.frontierPub.publish(pose_array)
 
-    def poseCallback(self, msg):
-        # self.get_logger().info("Got odom")
-
+    def poseCallback(self, msg: Odometry):
+        # odom already includes pose with covariance, so use pose.pose
         self.currentPose = msg.pose.pose
         self.initial_pose_received = True
     

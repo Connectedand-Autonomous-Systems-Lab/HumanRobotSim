@@ -525,6 +525,26 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /explore/frontiers
       Value: true
+    - Alpha: 1
+      Axes Length: 1
+      Axes Radius: 0.10000000149011612
+      Class: rviz_default_plugins/Pose
+      Color: 97; 53; 131
+      Enabled: true
+      Head Length: 0.30000001192092896
+      Head Radius: 0.10000000149011612
+      Name: Selected frontier
+      Shaft Length: 1
+      Shaft Radius: 0.10000000149011612
+      Shape: Arrow
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /selected_frontier
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -571,16 +591,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 33.03315734863281
+      Distance: 34.40896224975586
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 10.405245780944824
-        Y: -18.401872634887695
-        Z: 1.3858097791671753
+        X: 36.64760971069336
+        Y: -43.32108688354492
+        Z: 1.3589632511138916
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false

@@ -1,0 +1,49 @@
+This set of experiments are to test how potential scale and gain scale impact on exploration rate in simple robot.
+
+Robot
+    Robot = capsule
+    Velocity
+        Linear scale = 3
+        Angular scale = 1
+    scan
+        range max = 500
+
+Environment
+    Maze = Easy maze from user study
+
+######## lin=5 ang=3 #####################
+setting1
+    potential scale = 50
+    gain scale = 0.05
+
+setting2
+    potential scale = 300
+    gain scale = 0.05
+#################################################
+
+setting3 - Friday
+    potential scale = 500
+    gain scale = 0.05
+
+setting4 - Friday
+    potential scale = 50
+    gain_scale = 0.5
+
+setting1copy - Friday
+    potential scale = 50
+    gain scale = 0.05
+
+######## lin=5 ang=3 #####################
+setting5
+    potential scale = 50
+    gain scale = 0.5
+
+setting6
+    potential scale = 50
+    gain scale = 2.0
+
+Setting7
+    potential scale = 50
+    gain scale = 0.05
+
+#################################################

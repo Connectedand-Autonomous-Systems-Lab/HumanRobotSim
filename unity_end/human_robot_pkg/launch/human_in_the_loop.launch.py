@@ -191,13 +191,13 @@ def generate_launch_description():
     )
     
     human_bag = ExecuteProcess(
-            cmd=['ros2', 'bag', 'play', '/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg/rosbag/odom scan tf only/1', '--topics', '/human/scan', '/tf'],
+            cmd=['ros2', 'bag', 'play', '/media/2TB/Collaborative_user_study/Akhita/Easy/rosbag2_2025_12_01-16_09_23', ],
             output='screen'
         )
     
-    odom_pub = Node(
+    odom_publisher = Node(
         package="human_robot_pkg",
-        executable="odom_pub"
+        executable="odom_publisher"
     )
 
     scan_limiter = Node(
@@ -236,5 +236,5 @@ def generate_launch_description():
         # human_bag,
         # scan_limiter,
         # map_logger,
-        # odom_pub
+        odom_publisher,
     })

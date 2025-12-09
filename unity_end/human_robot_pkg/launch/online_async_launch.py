@@ -32,6 +32,7 @@ def generate_launch_description():
           {'max_laser_range': 50.0},
           {'min_laser_range': 0.0},
           {'map_update_interval': 0.1},
+          {'use_scan_matching': False}
         ],
         package='slam_toolbox',
         executable='async_slam_toolbox_node',

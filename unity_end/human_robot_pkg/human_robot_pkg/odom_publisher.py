@@ -1,6 +1,7 @@
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import PoseStamped
+from nav_msgs.msg import Odometry
 from tf2_ros import TransformListener, Buffer, LookupException
 from geometry_msgs.msg import TransformStamped
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
@@ -19,8 +20,8 @@ class OdomPublisherNode(Node):
         )
 
         # Publishers
-        self.robot_pub = self.create_publisher(PoseStamped, '/odom', qos_profile)
-        self.human_pub = self.create_publisher(PoseStamped, '/human/odom', qos_profile)
+        self.robot_pub = self.create_publisher(Odometry, '/odom', qos_profile)
+        self.human_pub = self.create_publisher(Odometry, '/human/odom', qos_profile)
 
         # TF listener
         self.tf_buffer = Buffer()
@@ -43,14 +44,14 @@ class OdomPublisherNode(Node):
                 rclpy.time.Time()
             )
 
-            pose_msg = PoseStamped()
-            pose_msg.header = transform.header
-            pose_msg.pose.position.x = transform.transform.translation.x
-            pose_msg.pose.position.y = transform.transform.translation.y
-            pose_msg.pose.position.z = transform.transform.translation.z
-            pose_msg.pose.orientation = transform.transform.rotation
-
-            publisher.publish(pose_msg)
+            odometry = Odometry()
+            odometry.header = transform.header
+            odometry.child_frame_id = child_frame
+            odometry.pose.pose.position.x = transform.transform.translation.x
+            odometry.pose.pose.position.y = transform.transform.translation.y
+            odometry.pose.pose.position.z = transform.transform.translation.z
+            odometry.pose.pose.orientation = transform.transform.rotation 
+            publisher.publish(odometry)
 
             self.get_logger().debug(f"Published {child_frame} pose to {topic_name}")
 

@@ -53,6 +53,18 @@ def generate_launch_description():
                         #   'use_respawn': 'False',
                         #   'container_name': 'nav2_container'
                           }.items())
+    
+    map_logger = Node(
+        package='human_robot_pkg',
+        executable='map_logger',
+        output='screen'
+    )
+
+    odom_publisher = Node(
+        package='human_robot_pkg',
+        executable='odom_publisher',
+        output='screen'
+    )
 
     nav2_bringup = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -171,4 +183,6 @@ def generate_launch_description():
         # human_map_to_map,
         # tb3_0_map_to_map
         # params
+        # map_logger,
+        odom_publisher,
     })
