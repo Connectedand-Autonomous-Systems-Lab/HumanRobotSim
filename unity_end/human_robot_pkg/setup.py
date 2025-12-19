@@ -26,7 +26,8 @@ setup(
     entry_points={
         'console_scripts': [
             'map_merge_node = human_robot_pkg.merge_map:main',
-            'frontier_pub = human_robot_pkg.frontier:main',
+            'frontier_detector = human_robot_pkg.frontier_detector:main',
+            'wavefront_frontier_publisher = human_robot_pkg.wavefront_frontier_publisher:main',
             'simple_navigator = human_robot_pkg.simple_navigator:main',
             'param_loader = human_robot_pkg.param_loader:main',
             'map_logger = human_robot_pkg.map_logger:main',

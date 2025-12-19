@@ -56,7 +56,7 @@ class OdomPublisherNode(Node):
             self.get_logger().debug(f"Published {child_frame} pose to {topic_name}")
 
         except LookupException:
-            self.get_logger().warn(f"TF lookup failed for {child_frame}. Waiting for TF...")
+            self.get_logger().debug(f"TF lookup failed for {child_frame}. Waiting for TF...")
 
 
 
@@ -69,7 +69,6 @@ def main(args=None):
         pass
     finally:
         node.destroy_node()
-        rclpy.shutdown()
 
 
 if __name__ == '__main__':

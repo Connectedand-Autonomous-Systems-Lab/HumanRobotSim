@@ -4,8 +4,7 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /Global Options1
-        - /Pose2
+        - /Wavefront_frontier_detector1
       Splitter Ratio: 0.4735293984413147
     Tree Height: 394
   - Class: rviz_common/Selection
@@ -56,19 +55,7 @@ Visualization Manager:
         All Enabled: false
         Robot:
           Value: true
-        human/base_footprint:
-          Value: true
-        human/base_scan:
-          Value: true
-        human/camera:
-          Value: true
-        human/map:
-          Value: true
-        human/odom:
-          Value: true
         map:
-          Value: true
-        merged_map:
           Value: true
         odom:
           Value: true
@@ -78,18 +65,10 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
-        merged_map:
-          human/map:
-            human/odom:
-              human/base_footprint:
-                human/base_scan:
-                  {}
-                human/camera:
-                  {}
-          map:
-            odom:
-              Robot:
-                {}
+        map:
+          odom:
+            Robot:
+              {}
       Update Interval: 0
       Value: true
     - Class: rviz_common/Group
@@ -276,7 +255,7 @@ Visualization Manager:
           Class: rviz_default_plugins/Map
           Color Scheme: map
           Draw Behind: true
-          Enabled: false
+          Enabled: true
           Name: Map
           Topic:
             Depth: 5
@@ -292,7 +271,7 @@ Visualization Manager:
             Reliability Policy: Reliable
             Value: /map_updates
           Use Timestamp: false
-          Value: false
+          Value: true
         - Alpha: 1
           Class: rviz_default_plugins/RobotModel
           Collision Enabled: false
@@ -444,95 +423,6 @@ Visualization Manager:
           Value: false
       Enabled: true
       Name: tb
-    - Alpha: 1
-      Arrow Length: 0.30000001192092896
-      Axes Length: 0.30000001192092896
-      Axes Radius: 0.009999999776482582
-      Class: rviz_default_plugins/PoseArray
-      Color: 255; 25; 0
-      Enabled: true
-      Head Length: 0.07000000029802322
-      Head Radius: 0.029999999329447746
-      Name: Frontiers
-      Shaft Length: 0.23000000417232513
-      Shaft Radius: 0.009999999776482582
-      Shape: Arrow (Flat)
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        Filter size: 10
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /frontiers
-      Value: true
-    - Alpha: 1
-      Axes Length: 1
-      Axes Radius: 0.10000000149011612
-      Class: rviz_default_plugins/PoseWithCovariance
-      Color: 255; 25; 0
-      Covariance:
-        Orientation:
-          Alpha: 0.5
-          Color: 255; 255; 127
-          Color Style: Unique
-          Frame: Local
-          Offset: 1
-          Scale: 1
-          Value: true
-        Position:
-          Alpha: 0.30000001192092896
-          Color: 204; 51; 204
-          Scale: 1
-          Value: true
-        Value: true
-      Enabled: false
-      Head Length: 0.30000001192092896
-      Head Radius: 0.10000000149011612
-      Name: PoseWithCovariance
-      Shaft Length: 1
-      Shaft Radius: 0.05000000074505806
-      Shape: Arrow
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        Filter size: 10
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /tb3_0/pose
-      Value: false
-    - Class: rviz_default_plugins/Marker
-      Enabled: false
-      Name: Marker
-      Namespaces:
-        {}
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        Filter size: 10
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /visualization_marker
-      Value: false
-    - Alpha: 1
-      Axes Length: 1
-      Axes Radius: 0.10000000149011612
-      Class: rviz_default_plugins/Pose
-      Color: 255; 25; 0
-      Enabled: false
-      Head Length: 0.30000001192092896
-      Head Radius: 0.10000000149011612
-      Name: Pose
-      Shaft Length: 10
-      Shaft Radius: 0.05000000074505806
-      Shape: Arrow
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        Filter size: 10
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /target_frontier
-      Value: false
     - Alpha: 0.699999988079071
       Class: rviz_default_plugins/Map
       Color Scheme: map
@@ -595,30 +485,48 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /target_point
       Value: true
-    - Alpha: 1
-      Axes Length: 1
-      Axes Radius: 0.10000000149011612
-      Class: rviz_default_plugins/Pose
-      Color: 97; 53; 131
+    - Class: rviz_common/Group
+      Displays:
+        - Class: rviz_default_plugins/MarkerArray
+          Enabled: true
+          Name: MarkerArray
+          Namespaces:
+            frontier_centroids: true
+            frontier_middles: true
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /frontier_markers
+          Value: true
+        - Alpha: 1
+          Arrow Length: 0.30000001192092896
+          Axes Length: 0.30000001192092896
+          Axes Radius: 0.009999999776482582
+          Class: rviz_default_plugins/PoseArray
+          Color: 255; 25; 0
+          Enabled: true
+          Head Length: 0.07000000029802322
+          Head Radius: 0.029999999329447746
+          Name: PoseArray
+          Shaft Length: 0.23000000417232513
+          Shaft Radius: 0.009999999776482582
+          Shape: Arrow (Flat)
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            Filter size: 10
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /frontiers
+          Value: true
       Enabled: true
-      Head Length: 0.30000001192092896
-      Head Radius: 0.10000000149011612
-      Name: Pose
-      Shaft Length: 1
-      Shaft Radius: 0.5
-      Shape: Arrow
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        Filter size: 10
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /selected_frontier
-      Value: true
+      Name: Wavefront_frontier_detector
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: merged_map
+    Fixed Frame: map
     Frame Rate: 30
   Name: root
   Tools:
@@ -661,25 +569,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 36.031681060791016
+      Distance: 18.111549377441406
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 16.30280303955078
-        Y: -5.537220001220703
-        Z: 3.8155691623687744
+        X: 7.946759223937988
+        Y: -14.105565071105957
+        Z: 3.8232927322387695
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.5347967147827148
+      Pitch: 1.5697963237762451
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 6.278598785400391
+      Yaw: 6.228598594665527
     Saved: ~
 Window Geometry:
   Displays:

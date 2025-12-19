@@ -1,0 +1,40 @@
+[component_container_isolated-1] [INFO] [1766070010.111109737] [bt_navigator]: Begin navigating from current location (14.74, -46.25) to (5.59, -49.27)
+[component_container_isolated-1] [INFO] [1766070010.974748419] [controller_server]: Passing new path to controller.
+[component_container_isolated-1] [INFO] [1766070012.024814057] [controller_server]: Passing new path to controller.
+[component_container_isolated-1] [INFO] [1766070013.074766284] [controller_server]: Passing new path to controller.
+[component_container_isolated-1] [INFO] [1766070014.074748129] [controller_server]: Passing new path to controller.
+[component_container_isolated-1] [INFO] [1766070015.124752642] [controller_server]: Passing new path to controller.
+[component_container_isolated-1] [INFO] [1766070016.124746969] [controller_server]: Passing new path to controller.
+[component_container_isolated-1] [INFO] [1766070017.174768147] [controller_server]: Passing new path to controller.
+[component_container_isolated-1] [INFO] [1766070018.224766457] [controller_server]: Passing new path to controller.
+[component_container_isolated-1] [INFO] [1766070019.224753090] [controller_server]: Passing new path to controller.
+[component_container_isolated-1] [INFO] [1766070019.977544079] [controller_server]: Reached the goal!
+[component_container_isolated-1] [INFO] [1766070020.010818709] [bt_navigator]: Goal succeeded
+[component_container_isolated-1] [INFO] [1766070022.137699442] [bt_navigator]: Begin navigating from current location (5.98, -49.07) to (35.06, -49.40)
+[component_container_isolated-1] [ERROR] [1766070022.157311465] [planner_server]: Failed to create a plan from potential when a legal potential was found. This shouldn't happen.
+[component_container_isolated-1] [WARN] [1766070022.157428565] [planner_server]: GridBased: failed to create plan with tolerance 0.50.
+[component_container_isolated-1] [WARN] [1766070022.157452383] [planner_server]: Planning algorithm GridBased failed to generate a valid path to (35.06, -49.40)
+[component_container_isolated-1] [WARN] [1766070022.157486696] [planner_server]: [compute_path_to_pose] [ActionServer] Aborting handle.
+[component_container_isolated-1] [INFO] [1766070022.168259589] [global_costmap.global_costmap]: Received request to clear entirely the global_costmap
+[component_container_isolated-1] [ERROR] [1766070022.769901783] [planner_server]: Failed to create a plan from potential when a legal potential was found. This shouldn't happen.
+[component_container_isolated-1] [WARN] [1766070022.770031038] [planner_server]: GridBased: failed to create plan with tolerance 0.50.
+[component_container_isolated-1] [WARN] [1766070022.770056714] [planner_server]: Planning algorithm GridBased failed to generate a valid path to (35.06, -49.40)
+[component_container_isolated-1] [WARN] [1766070022.770081926] [planner_server]: [compute_path_to_pose] [ActionServer] Aborting handle.
+[component_container_isolated-1] [INFO] [1766070022.788452486] [local_costmap.local_costmap]: Received request to clear entirely the local_costmap
+[component_container_isolated-1] [INFO] [1766070022.789014921] [global_costmap.global_costmap]: Received request to clear entirely the global_costmap
+[component_container_isolated-1] [ERROR] [1766070023.760393056] [planner_server]: Failed to create a plan from potential when a legal potential was found. This shouldn't happen.
+[component_container_isolated-1] [WARN] [1766070023.760537952] [planner_server]: GridBased: failed to create plan with tolerance 0.50.
+[component_container_isolated-1] [WARN] [1766070023.760563156] [planner_server]: Planning algorithm GridBased failed to generate a valid path to (35.06, -49.40)
+[component_container_isolated-1] [WARN] [1766070023.760597386] [planner_server]: [compute_path_to_pose] [ActionServer] Aborting handle.
+[component_container_isolated-1] [INFO] [1766070023.778327037] [global_costmap.global_costmap]: Received request to clear entirely the global_costmap
+[component_container_isolated-1] [ERROR] [1766070024.768937279] [planner_server]: Failed to create a plan from potential when a legal potential was found. This shouldn't happen.
+[component_container_isolated-1] [WARN] [1766070024.769061873] [planner_server]: GridBased: failed to create plan with tolerance 0.50.
+[component_container_isolated-1] [WARN] [1766070024.769094982] [planner_server]: Planning algorithm GridBased failed to generate a valid path to (35.06, -49.40)
+[component_container_isolated-1] [WARN] [1766070024.769122215] [planner_server]: [compute_path_to_pose] [ActionServer] Aborting handle.
+[component_container_isolated-1] [INFO] [1766070024.788730987] [behavior_server]: Running spin
+[component_container_isolated-1] [INFO] [1766070024.788931990] [behavior_server]: Turning 1.57 for spin behavior.
+[component_container_isolated-1] [ERROR] [1766070024.889285827] [behavior_server]: Costmap is not available
+[component_container_isolated-1] [WARN] [1766070024.889378348] [behavior_server]: Collision Ahead - Exiting Spin
+[component_container_isolated-1] [WARN] [1766070024.889386244] [behavior_server]: spin failed
+[component_container_isolated-1] [WARN] [1766070024.889397181] [behavior_server]: [spin] [ActionServer] Aborting handle.
+[component_container_isolated-1] [INFO] [1766070024.919412434] [behavior_server]: Running wait

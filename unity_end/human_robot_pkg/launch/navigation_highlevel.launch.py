@@ -22,7 +22,18 @@ def generate_launch_description():
     
     # ros2 launch nav2_bringup navigation_launch.py params_file:=/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg/config/nav2_params.yaml
 
-
+    nav2_with_map= IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(get_package_share_directory('nav2_bringup'), 'launch', 'bringup_launch.py')
+        ),
+        launch_arguments={
+                            'use_sim_time': 'True',
+                            'map': os.path.join('/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg/maps/map2/map_1766076092.yaml') ,
+                        #   'params_file': os.path.join(get_package_share_directory('human_robot_pkg'), 'config', 'tb3_0_nav2_params.yaml'),
+                            'params_file': os.path.join(package_dir, 'config', 'nav2_params.yaml'),
+                            'use_composition': 'True',
+                            'auto_start': 'True',
+                            'container_name': 'nav2_container'}.items())
     
     simple_navigator = Node(
         package="human_robot_pkg",
@@ -88,7 +99,7 @@ def generate_launch_description():
             # move3,
             # simple_navigator,
             # map_logger,
-            human_bag,
+            # human_bag,
             # explore,
             # point_to_nav_goal
             ]
@@ -96,9 +107,10 @@ def generate_launch_description():
 
     return LaunchDescription({
         navigation,
+        # nav2_with_map,
         # odom_pub,
-        delayed_nodes,
+        # delayed_nodes,
         # simple_navigator,
-        map_logger,
+        # map_logger,
         # human_bag,
     })

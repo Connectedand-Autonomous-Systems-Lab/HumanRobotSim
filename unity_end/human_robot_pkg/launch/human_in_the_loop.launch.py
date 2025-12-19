@@ -28,9 +28,17 @@ def generate_launch_description():
         parameters=[{'use_sim_time':True}]
     )
 
-    frontier_pub = Node(
+    # This renders the entire map every time it receives a map update to update the frontier points.
+    frontier_detector = Node(  
         package='human_robot_pkg',
-        executable='frontier_pub',
+        executable='frontier_detector',
+        output='screen',
+        parameters=[{'use_sim_time':True}]
+    )
+
+    wavefront_frontier_publisher = Node(
+        package='human_robot_pkg',
+        executable='wavefront_frontier_publisher',
         output='screen',
         parameters=[{'use_sim_time':True}]
     )
@@ -213,7 +221,8 @@ def generate_launch_description():
     return LaunchDescription({
         ros_tcp_endpoint,
         rviz2,
-        frontier_pub,
+        # frontier_pub,
+        
         # navigation_tb3_0,
         # slam_toolbox_tb3_0,
         slam_toolbox,
@@ -222,10 +231,10 @@ def generate_launch_description():
         # nav2_bringup_tb3_0,
         # nav2_bringup_tb3_0_pushed,
         
-        slam_toolbox_human,
-        map_merge,
-        human_map_to_map,
-        tb3_0_map_to_map,
+        # slam_toolbox_human,
+        # map_merge,
+        # human_map_to_map,
+        # tb3_0_map_to_map,
         
         # params
         # nav2_nodes
@@ -237,4 +246,5 @@ def generate_launch_description():
         # scan_limiter,
         # map_logger,
         odom_publisher,
+        wavefront_frontier_publisher,
     })
