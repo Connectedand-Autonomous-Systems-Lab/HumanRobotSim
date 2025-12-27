@@ -1,13 +1,38 @@
-# Run saved human rosbag along with the turtlebot3
+# Simulation
+
+This simulation is intent to run along with Unity. First setup Unity referring to the repository [Unity repository](https://github.com/Connected-and-Autonomous-Systems-Lab/Collaboration.git). If you want to run just a demonstration without simulating the robot in Unity, just refer "Run a complete demonstration saved in a ros bag".
+
+## Requirements
+
+1. ROS2 Humble [Get Started](https://docs.ros.org/en/humble/Installation.html)
+2. ROS2 packages (install via `sudo apt install ...`):
+   - ros-humble-nav2-bringup
+   - ros-humble-slam-toolbox
+   - ros-humble-turtlebot3-cartographer
+   - ros-humble-ros-tcp-endpoint
+   - ros-humble-rviz2
+   - ros-humble-tf2-ros
+
+## Run a complete demonstration saved in a ros bag
+
+The following code brings up an instance from the dataset and how Concord worked on a simulated robot in Unity along with that human.
 
 ```bash
-ros2 launch human_in_the_loop human_in_the_loop.launch.py
+ros2 launch collaborate demonstration.launch.py
+```
+
+## Run a robot asynchronously with a user run
+
+The following will run an instance from the dataset along with a robot in Unity. Refer the following link for the dataset.
+
+```bash
+ros2 launch human_robot_pkg human_in_the_loop.launch.py
 ```
 
 Make sure you disable the human player in the Unity scene as you are just using the previous run of the human run.
 
 ```bash
-ros2 launch human_in_the_loop navigation_highlevel.launch.py
+ros2 launch human_robot_pkg navigation_highlevel.launch.py
 ```
 
 Finally,
@@ -16,14 +41,9 @@ Finally,
 ros2 launch explore_lite explore.launch.py
 ```
 
-If you want to test the experimental “dev” explorer (which considers human pose information when picking frontiers) build and launch `explore_dev.cpp` / `frontier_search_dev.cpp` via the `explore_dev.launch.py` file instead; otherwise the standard launch described above ignores the human pose topic entirely.
+## Known errors
 
-# RL training
-
-
-# Known errors
-
-## 1. Lookup error
+### 1. Lookup error
 The following error in Rviz
 ```bash
 symbol lookup error: /snap/core20/current/lib/x86_64-linux-gnu/libpthread.so.0: undefined symbol: __libc_pthread_init, version GLIBC_PRIVATE
@@ -34,7 +54,7 @@ Solution:
 unset GTK_PATH
 ```
 
-## 2. C extension not present
+### 2. C extension not present
 
 ```bash
 ModuleNotFoundError: No module named 'rclpy._rclpy_pybind11'
