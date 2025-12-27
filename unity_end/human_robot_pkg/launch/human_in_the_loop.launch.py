@@ -221,20 +221,19 @@ def generate_launch_description():
     return LaunchDescription({
         ros_tcp_endpoint,
         rviz2,
-        # frontier_pub,
         
         # navigation_tb3_0,
         # slam_toolbox_tb3_0,
         slam_toolbox,
+        slam_toolbox_human,
         # slam_toolbox_altered_map,
         # custom_nav2_bringup,
         # nav2_bringup_tb3_0,
         # nav2_bringup_tb3_0_pushed,
         
-        # slam_toolbox_human,
-        # map_merge,
-        # human_map_to_map,
-        # tb3_0_map_to_map,
+        map_merge,
+        human_map_to_map,
+        tb3_0_map_to_map,
         
         # params
         # nav2_nodes

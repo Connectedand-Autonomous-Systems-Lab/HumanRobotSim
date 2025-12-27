@@ -56,14 +56,14 @@ class MapLoggerNode(Node):
 
         self.human_det_sub = self.create_subscription(
             String,
-            'detection',
+            'human/detection',
             self.human_detection_callback,
             10
         )
 
         self.tb3_det_sub = self.create_subscription(
             String,
-            'tb3/detection',
+            'detection',
             self.tb3_detection_callback,
             10
         )
@@ -94,8 +94,9 @@ class MapLoggerNode(Node):
         # Setup persistent CSV file object
         package_src_dir = os.path.dirname(os.path.realpath(__file__))
         package_dir = os.path.abspath(os.path.join(package_src_dir, '..'))
-        self.output_file_path = os.path.join(package_dir, 'logs/user_study/easy', 'alireza.csv')
-        os.makedirs(os.path.join(package_dir, 'logs'), exist_ok=True)
+        relative_path = 'logs/user_study/yang/hard'
+        self.output_file_path = os.path.join(package_dir, relative_path, 'log.csv')
+        os.makedirs(os.path.join(package_dir, relative_path), exist_ok=True)
 
         self.csv_file = open(self.output_file_path, 'w', newline='')
         self.csv_writer = csv.writer(self.csv_file)
@@ -206,7 +207,7 @@ class MapLoggerNode(Node):
         elapsed_time = (self.get_clock().now() - self.start_time).nanoseconds / 1e9
 
         self.total_detections_list = list(set(self.human_detection_list+self.tb3_detection_list))
-        self.get_logger().info(f"Human: {self.human_detection_list}  tb3: {self.tb3_detection_list}  total: {self.total_detections_list}")
+        # self.get_logger().info(f"Human: {self.human_detection_list}  tb3: {self.tb3_detection_list}  total: {self.total_detections_list}")
 
         self.csv_writer.writerow([elapsed_time, tb_explored_cells, self.tb_trajectory_length, human_explored_cells, self.human_trajectory_length, merged_explored_cells, len(self.human_detection_list), len(self.tb3_detection_list), len(self.total_detections_list)])
         self.csv_file.flush()

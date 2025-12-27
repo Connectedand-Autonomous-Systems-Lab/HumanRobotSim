@@ -45,10 +45,12 @@ class FrontierSearch:
     def __init__(self,
                  potential_scale: float,
                  gain_scale: float,
-                 min_frontier_size_m: float):
+                 min_frontier_size_m: float,
+                 min_wall_distance_m: float):
         self.potential_scale = potential_scale
         self.gain_scale = gain_scale
         self.min_frontier_size_m = min_frontier_size_m
+        self.min_wall_distance_m = min_wall_distance_m
 
         # Map cache
         self._grid: Optional[OccupancyGrid] = None
@@ -297,7 +299,7 @@ class FrontierSearch:
                     nf = self.build_new_frontier(nbr, pos_idx, frontier_flag)
 
                     # Filter by physical size in meters (size * resolution)
-                    if nf.size * self._res >= self.min_frontier_size_m:
+                    if nf.size * self._res >= self.min_frontier_size_m and self._has_wall_clearance(nf):
                         frontier_list.append(nf)
 
         # Score & sort
@@ -306,6 +308,30 @@ class FrontierSearch:
 
         frontier_list.sort(key=lambda x: x.cost)
         return frontier_list
+
+    def _has_wall_clearance(self, frontier: Frontier) -> bool:
+        """Return True if the frontier's middle point is at least min_wall_distance_m from obstacles."""
+        if self._map_costs is None or self._grid is None:
+            return True
+
+        mxy = self.world_to_map(frontier.middle.x, frontier.middle.y)
+        if mxy is None:
+            return False
+
+        mx, my = mxy
+        radius_cells = max(1, int(math.ceil(self.min_wall_distance_m / self._res)))
+
+        for dy in range(-radius_cells, radius_cells + 1):
+            for dx in range(-radius_cells, radius_cells + 1):
+                nx = mx + dx
+                ny = my + dy
+                if 0 <= nx < self._size_x and 0 <= ny < self._size_y:
+                    dist = math.hypot(dx * self._res, dy * self._res)
+                    if dist <= self.min_wall_distance_m:
+                        idx = self.index(nx, ny)
+                        if self._map_costs[idx] == self.LETHAL_OBSTACLE:
+                            return False
+        return True
 
 
 # ----------------------------
@@ -316,14 +342,15 @@ class FrontierDetectorNode(Node):
         super().__init__('frontier_detector')
 
         # Params
-        self.declare_parameter('map_topic', '/map')
+        self.declare_parameter('map_topic', '/merged_map')
         self.declare_parameter('odom_topic', '/odom')
         self.declare_parameter('frontiers_topic', '/frontiers')
         self.declare_parameter('markers_topic', '/frontier_markers')
         self.declare_parameter('publish_rate_hz', 1.0)
-        self.declare_parameter('potential_scale', 1.0)
-        self.declare_parameter('gain_scale', 1.0)
-        self.declare_parameter('min_frontier_size_m', 0.5)
+        self.declare_parameter('potential_scale', 50.0)
+        self.declare_parameter('gain_scale', 0.01)
+        self.declare_parameter('min_frontier_size_m', 0.1)
+        self.declare_parameter('min_wall_distance_m', 0.3)
         self.declare_parameter('frame_id', 'map')
 
         map_topic = self.get_parameter('map_topic').get_parameter_value().string_value
@@ -338,11 +365,13 @@ class FrontierDetectorNode(Node):
         potential_scale = float(self.get_parameter('potential_scale').value)
         gain_scale = float(self.get_parameter('gain_scale').value)
         min_frontier_size_m = float(self.get_parameter('min_frontier_size_m').value)
+        min_wall_distance_m = float(self.get_parameter('min_wall_distance_m').value)
 
         self.searcher = FrontierSearch(
             potential_scale=potential_scale,
             gain_scale=gain_scale,
-            min_frontier_size_m=min_frontier_size_m
+            min_frontier_size_m=min_frontier_size_m,
+            min_wall_distance_m=min_wall_distance_m
         )
 
         # Shared state

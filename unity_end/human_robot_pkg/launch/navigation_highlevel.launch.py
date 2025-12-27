@@ -40,6 +40,11 @@ def generate_launch_description():
         executable="simple_navigator"
     )
     
+    frontier_navigator = Node(
+        package="human_robot_pkg",
+        executable="frontier_navigator"
+    )
+
     map_logger = Node(
         package="human_robot_pkg",
         executable="map_logger"
@@ -57,9 +62,15 @@ def generate_launch_description():
     )
 
     human_bag = ExecuteProcess(
-            cmd=['ros2', 'bag', 'play', '/media/2TB/Collaborative_user_study/Alireza/Easy/rosbag2_2025_12_01-14_55_55'],
+            cmd=['ros2', 'bag', 'play', '/media/2TB/Collaborative_user_study/Yang/Hard/rosbag2_2025_12_01-19_49_11'],
             output='screen'
         )
+
+    record_collaborate = ExecuteProcess(
+        cmd=['ros2', 'bag', 'record', '-o', 'collaborate_bag'],
+        output='screen'
+    )
+
 
     move_simple = [
         'ros2', 'topic', 'pub', '/cmd_vel', 'geometry_msgs/Twist',
@@ -93,8 +104,8 @@ def generate_launch_description():
         period=5.0,
         actions=[
             # navigation,
-            move1,
-            stop,
+            # move1,
+            # stop,
             # move2,
             # move3,
             # simple_navigator,
@@ -112,5 +123,6 @@ def generate_launch_description():
         # delayed_nodes,
         # simple_navigator,
         # map_logger,
-        # human_bag,
+        human_bag,
+        # frontier_navigator
     })
