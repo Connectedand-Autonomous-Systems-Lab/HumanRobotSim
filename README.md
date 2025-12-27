@@ -2,6 +2,8 @@
 
 This simulation is intent to run along with Unity. First setup Unity referring to the repository [Unity repository](https://github.com/Connected-and-Autonomous-Systems-Lab/Collaboration.git). If you want to run just a demonstration without simulating the robot in Unity, just refer "Run a complete demonstration saved in a ros bag".
 
+https://github.com/user-attachments/assets/ce78e9e9-c923-4921-800f-d7105be847c5
+
 ## Requirements
 
 1. ROS2 Humble [Get Started](https://docs.ros.org/en/humble/Installation.html)
@@ -38,8 +40,13 @@ ros2 launch human_robot_pkg navigation_highlevel.launch.py
 Finally,
 
 ```bash
-ros2 launch explore_lite explore.launch.py
+ros2 run human_robot_pkg frontier_navigator
 ```
+
+You will see the robot from Unity will start to complement the human player and search for human victims.
+
+https://github.com/user-attachments/assets/a7232957-34a2-4bab-b7dc-f96ed14b67c1
+
 
 ## Known errors
 
