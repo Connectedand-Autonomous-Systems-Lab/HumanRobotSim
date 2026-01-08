@@ -1,8 +1,12 @@
-# Simulation
+# **ConCord: Human-in-the-Loop, Cooperative Robot Exploration**
 
-This simulation is intent to run along with Unity. First setup Unity referring to the repository [Unity repository](https://github.com/Connected-and-Autonomous-Systems-Lab/Collaboration.git). If you want to run just a demonstration without simulating the robot in Unity, just refer "Run a complete demonstration saved in a ros bag".
+This is the code base for implementing ROS environment block of **ConCord: Human-in-the-Loop, Cooperative Robot Exploration**.
 
-<img src="readme_files/collaborative_search_10min_16x_masked.gif" width="30%" />
+<img src="readme_files/sim-engine.jpg" width="50%" />
+
+This simulation is intent to run along with Unity. First setup Unity Scene block mentioned in the diagram referring to the repository [Unity repository](https://github.com/Connected-and-Autonomous-Systems-Lab/Collaboration.git). If you want to run just a demonstration without simulating the robot in Unity, just refer "Run a complete demonstration saved in a ros bag".
+
+<img src="readme_files/collaborative_search_10min_16x_masked.gif" width="80%" />
 
 ## Requirements
 
@@ -25,7 +29,7 @@ ros2 launch collaborate demonstration.launch.py
 
 ## Run a robot asynchronously with a user run
 
-The following will run an instance from the dataset along with a robot in Unity. Refer the following link for the dataset.
+The following will run an instance from the dataset along with a robot in Unity. Refer the following link for the dataset. [Dataset Documentation](readme_files/dataset_README.md)
 
 ```bash
 ros2 launch human_robot_pkg human_in_the_loop.launch.py
@@ -45,7 +49,7 @@ ros2 run human_robot_pkg frontier_navigator
 
 You will see the robot from Unity will start to complement the human player and search for human victims.
 
-<img src="readme_files/Simple_robot_on_unity_timelapse.gif" width="30%" />
+<img src="readme_files/Simple_robot_on_unity_timelapse.gif" width="60%" />
 
 
 ## Known errors
