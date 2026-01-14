@@ -9,7 +9,7 @@ from rclpy.action import ActionClient
 from action_msgs.msg import GoalStatus
 from geometry_msgs.msg import PoseArray, PoseStamped
 from nav2_msgs.action import NavigateToPose
-import time
+from nav_msgs.msg import Odometry
 
 
 class FrontierNavigator(Node):
@@ -28,6 +28,13 @@ class FrontierNavigator(Node):
         self._blacklisted_frontiers = []
         self._current_goal = None
 
+        self.human_position = None
+        self.robot_position = None
+        self.human_trajectory = []
+        self.human_trajectory_threshold = 30.0  # meters
+        self.human_trajectory_offset = 0
+        self.human_trajectory_offset_counter = 0
+
         # Subscribe to frontier PoseArray
         self.frontier_sub = self.create_subscription(
             PoseArray,
@@ -40,6 +47,20 @@ class FrontierNavigator(Node):
         self.selected_frontier_pub = self.create_publisher(
             PoseStamped,
             '/selected_frontier',
+            10
+        )
+
+        self.human_odom_sub = self.create_subscription(
+            Odometry,
+            '/human/odom',
+            self.human_odom_callback,
+            10
+        )
+
+        self.robot_odom_sub = self.create_subscription(
+            Odometry,
+            '/odom',
+            self.robot_odom_callback,
             10
         )
 
@@ -168,6 +189,18 @@ class FrontierNavigator(Node):
         self._current_goal = None
         self.navigate_to_frontier()
 
+    def human_odom_callback(self, msg: Odometry):
+        """Called whenever a new human odometry message is received."""
+        self.human_position = msg.pose.pose.position
+        self.human_trajectory_offset_counter += 1
+        if self.human_trajectory_offset_counter >= self.human_trajectory_offset:
+            self.human_trajectory.append(self.human_position)
+            self.human_trajectory_offset_counter = 0
+
+    def robot_odom_callback(self, msg: Odometry):
+        """Called whenever a new robot odometry message is received."""
+        self.robot_position = msg.pose.pose.position
+
     def _is_blacklisted(self, pose):
         """Return True if pose aligns with any blacklisted frontier."""
         px = pose.position.x
@@ -175,6 +208,13 @@ class FrontierNavigator(Node):
         for bx, by in self._blacklisted_frontiers:
             if math.hypot(px - bx, py - by) <= self.blacklist_radius:
                 return True
+            
+        """Check if the frontier is too close to the human trajectory"""
+        if self.human_trajectory:
+            for point in self.human_trajectory:
+                dist = math.hypot(px - point.x, py - point.y)
+                if dist <= self.human_trajectory_threshold:  # threshold distance
+                    return True
         return False
 
     def _blacklist_current_goal(self):
