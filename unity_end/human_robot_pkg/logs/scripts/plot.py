@@ -3,7 +3,8 @@ import matplotlib.pyplot as plt
 import os
 from matplotlib.ticker import ScalarFormatter
 
-csv_path = os.path.expanduser('/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg/logs/user_study/seperate_map_exploration_alireza_easy_robot_faced_same_way_600s.csv')
+csv_dir = '/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg/logs/user_study/Concord_M/akhita/easy'
+csv_path = os.path.expanduser(csv_dir + '/log.csv')
 
 df = pd.read_csv(csv_path)
 df.columns = df.columns.str.strip()  # Clean headers just in case
@@ -25,8 +26,8 @@ plt.plot(df['Time Elapsed (s)'], df['tb exploration'], label='Robot only', linew
 plt.plot(df['Time Elapsed (s)'], df['human exploration'], label='Human only', linestyle= ':', linewidth= 2.0)
 # plt.plot(df['Time Elapsed (s)'], df['tb uncoordinated traj'], label='Human only', linestyle= ':', linewidth= 2.0)
 plt.plot(df['Time Elapsed (s)'], df['merged exploration'], label='Uncoordinated', linestyle= '--', linewidth= 2.0)
-plt.plot(df['Time Elapsed (s)'], df['merged_exploration_merged_map'], label='Concord - M', linestyle= '-.', linewidth= 2.0)
-plt.plot(df['Time Elapsed (s)'], df['with_human_knowledge'], label='Concord', linestyle=(0, (3, 5, 1, 5)), linewidth= 2.0)
+# plt.plot(df['Time Elapsed (s)'], df['merged_exploration_merged_map'], label='Concord - M', linestyle= '-.', linewidth= 2.0)
+# plt.plot(df['Time Elapsed (s)'], df['with_human_knowledge'], label='Concord', linestyle=(0, (3, 5, 1, 5)), linewidth= 2.0)
 plt.xlabel('Time Elapsed (s)', fontsize=18)
 plt.ylabel('Explored Cells', fontsize= 18)
 # plt.title('Exploration Over Time')
@@ -35,7 +36,8 @@ plt.tick_params(axis='both', labelsize=18)
 format_y_axis_scientific(plt.gca())
 plt.legend(fontsize=14)
 plt.tight_layout()
-plt.show()
+# plt.show()
+plt.savefig(csv_dir + "/exploration_over_time.png", dpi=300, bbox_inches="tight")
 
 # Plot Trajectory Metrics
 plt.figure()

@@ -34,7 +34,6 @@ class Frontier:
 class FrontierSearch:
     """
     OccupancyGrid-based reimplementation of explore_lite’s frontier search
-    using the same techniques from the C++ code you pasted.
     """
 
     # We emulate Nav2 cost semantics for the explore_lite logic

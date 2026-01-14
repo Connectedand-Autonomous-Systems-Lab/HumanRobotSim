@@ -102,7 +102,6 @@ class FrontierNavigator(Node):
             return
         self.latest_frontiers = msg
         
-
     def send_navigation_goal(self, goal_pose: PoseStamped):
         """Send a NavigateToPose goal to Nav2."""
         # if self.navigating:
