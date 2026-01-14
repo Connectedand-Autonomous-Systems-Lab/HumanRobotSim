@@ -1,0 +1,137 @@
+[
+    {
+        "epoch": 0,
+        "episode": 2,
+        "free_pixels": 125900
+    },
+    {
+        "epoch": 0,
+        "episode": 4,
+        "free_pixels": 197400
+    },
+    {
+        "epoch": 0,
+        "episode": 6,
+        "free_pixels": 38300
+    },
+    {
+        "epoch": 0,
+        "episode": 8,
+        "free_pixels": 81000
+    },
+    {
+        "epoch": 0,
+        "episode": 10,
+        "free_pixels": 31000
+    },
+    {
+        "epoch": 0,
+        "episode": 12,
+        "free_pixels": 30400
+    },
+    {
+        "epoch": 0,
+        "episode": 14,
+        "free_pixels": 31400
+    },
+    {
+        "epoch": 0,
+        "episode": 16,
+        "free_pixels": 33000
+    },
+    {
+        "epoch": 0,
+        "episode": 18,
+        "free_pixels": 140800
+    },
+    {
+        "epoch": 1,
+        "episode": 2,
+        "free_pixels": 32900
+    },
+    {
+        "epoch": 1,
+        "episode": 4,
+        "free_pixels": 91200
+    },
+    {
+        "epoch": 1,
+        "episode": 6,
+        "free_pixels": 101600
+    },
+    {
+        "epoch": 1,
+        "episode": 8,
+        "free_pixels": 116900
+    },
+    {
+        "epoch": 1,
+        "episode": 10,
+        "free_pixels": 97300
+    },
+    {
+        "epoch": 1,
+        "episode": 12,
+        "free_pixels": 96400
+    },
+    {
+        "epoch": 1,
+        "episode": 14,
+        "free_pixels": 107600
+    },
+    {
+        "epoch": 1,
+        "episode": 16,
+        "free_pixels": 61100
+    },
+    {
+        "epoch": 1,
+        "episode": 18,
+        "free_pixels": 31300
+    },
+    {
+        "epoch": 2,
+        "episode": 2,
+        "free_pixels": 31200
+    },
+    {
+        "epoch": 2,
+        "episode": 4,
+        "free_pixels": 32800
+    },
+    {
+        "epoch": 2,
+        "episode": 6,
+        "free_pixels": 40500
+    },
+    {
+        "epoch": 2,
+        "episode": 8,
+        "free_pixels": 44200
+    },
+    {
+        "epoch": 2,
+        "episode": 10,
+        "free_pixels": 54400
+    },
+    {
+        "epoch": 2,
+        "episode": 12,
+        "free_pixels": 34900
+    },
+    {
+        "epoch": 2,
+        "episode": 14,
+        "free_pixels": 29100
+    },
+    {
+        "epoch": 2,
+        "episode": 16,
+        "free_pixels": 119500
+    },
+    {
+        "epoch": 2,
+        "episode": 18,
+        "free_pixels": 42600
+    }
+]
