@@ -199,7 +199,7 @@ def generate_launch_description():
     )
     
     human_bag = ExecuteProcess(
-            cmd=['ros2', 'bag', 'play', '/media/2TB/Collaborative_user_study/Akhita/Easy/rosbag2_2025_12_01-16_09_23', ],
+            cmd=['ros2', 'bag', 'play', '/media/2TB/Collaborative_user_study/Bimal/Hard/rosbag2_2025_12_04-17_01_38', ],
             output='screen'
         )
     
@@ -241,7 +241,7 @@ def generate_launch_description():
         # delayed_navigation,
         # simple_navigator,
         
-        # human_bag,
+        human_bag,
         # scan_limiter,
         # map_logger,
         odom_publisher,
