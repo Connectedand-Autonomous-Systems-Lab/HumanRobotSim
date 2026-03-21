@@ -486,7 +486,7 @@ class FrontierDetectorNode(Node):
             ma.markers.append(m)
 
         self.markers_pub.publish(ma)
-        self.get_logger().info(f"Published {len(frontiers)} frontiers")
+        self.get_logger().debug(f"Published {len(frontiers)} frontiers")
 
 
 def main():

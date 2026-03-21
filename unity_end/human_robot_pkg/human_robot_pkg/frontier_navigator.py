@@ -9,6 +9,7 @@ from rclpy.action import ActionClient
 from action_msgs.msg import GoalStatus
 from geometry_msgs.msg import PoseArray, PoseStamped
 from nav2_msgs.action import NavigateToPose
+from irobot_create_msgs.action import NavigateToPosition
 from nav_msgs.msg import Odometry
 
 
@@ -19,11 +20,13 @@ class FrontierNavigator(Node):
 
         self.declare_parameter('goal_refresh_timeout', 0.0)
         self.declare_parameter('blacklist_radius', 0.5)
+        self.declare_parameter('navigation_action_server', 'navigate_to_pose')
         # self.goal_refresh_timeout = float(self.get_parameter('goal_refresh_timeout').value)
-        self.goal_refresh_timeout = 3.0
+        self.goal_refresh_timeout = 30.0
         self.last_goal_time = None
         self.blacklist_radius = float(self.get_parameter('blacklist_radius').value)
         self.latest_frontiers = PoseArray()
+        self.navigation_action_server = self.get_parameter('navigation_action_server').get_parameter_value().string_value
 
         self._blacklisted_frontiers = []
         self._current_goal = None
@@ -67,7 +70,11 @@ class FrontierNavigator(Node):
         self.tick_timer = self.create_timer(1.0, self.navigate_to_frontier)
 
         # Nav2 NavigateToPose action client
-        self.nav_client = ActionClient(self, NavigateToPose, 'navigate_to_pose')
+        if 'navigate_to_position' in self.navigation_action_server:
+            self.get_logger().warn('Using NavigateToPosition action server instead of NavigateToPose!')
+            self.nav_client = ActionClient(self, NavigateToPosition, self.navigation_action_server)
+        else:
+            self.nav_client = ActionClient(self, NavigateToPose, self.navigation_action_server)
 
         # Track whether Nav2 currently has an active goal
         self.navigating = False
@@ -76,20 +83,19 @@ class FrontierNavigator(Node):
 
     def navigate_to_frontier(self):
         if not self.latest_frontiers.poses:
-            self.get_logger().info('No frontiers available to navigate to.')
+            self.get_logger().warn('No frontiers available to navigate to.')
             return
-        elif self.navigating:
-            self.get_logger().debug('Already navigating to a frontier; ignoring new frontiers.')
-            return
-
-        if self.navigating and self.goal_refresh_timeout > 0.0 and self.last_goal_time is not None:
+        elif self.navigating and self.goal_refresh_timeout > 0.0 and self.last_goal_time is not None:
             elapsed = (self.get_clock().now() - self.last_goal_time).nanoseconds / 1e9
             if elapsed < self.goal_refresh_timeout:
                 self.get_logger().debug('Ignoring new frontiers until refresh timeout elapses.')
                 return
             self.get_logger().warn('Refresh timeout hit, preempting current goal for new frontier.')
         elif self.navigating:
-            self.get_logger().info('New frontier set received; preempting current goal.')
+            self.get_logger().warn('Goal refresh error. Continring to navigate to current frontier until it is reached or aborted.')
+            return
+        else:
+            self.get_logger().debug('Assessing new frontiers to navigate to.')
 
         # frontier_publisher orders poses by ascending cost, so choose the first allowed frontier
         selected_pose = None
@@ -102,8 +108,6 @@ class FrontierNavigator(Node):
             self.get_logger().warn('All received frontiers are currently blacklisted.')
             return
 
-        self.get_logger().debug('Selected cheapest non-blacklisted frontier as goal.')
-
         # Create PoseStamped from selected pose
         selected_ps = PoseStamped()
         selected_ps.header = self.latest_frontiers.header      # use same frame as PoseArray (e.g. "map")
@@ -111,7 +115,6 @@ class FrontierNavigator(Node):
 
         # Publish selected frontier
         self.selected_frontier_pub.publish(selected_ps)
-        self.get_logger().info('Published selected frontier to /selected_frontier.')
 
         # Send navigation goal
         self.send_navigation_goal(selected_ps)
@@ -129,9 +132,14 @@ class FrontierNavigator(Node):
         #     return
         self.nav_client.wait_for_server()
 
-        goal_msg = NavigateToPose.Goal()
-        goal_msg.pose = goal_pose
-        goal_msg.behavior_tree = ''  # use default BT
+        if 'navigate_to_position' in self.navigation_action_server:
+            goal_msg = NavigateToPosition.Goal()
+            goal_msg.goal_pose = goal_pose
+            goal_msg.achieve_goal_heading = True
+        else:
+            goal_msg = NavigateToPose.Goal()
+            goal_msg.pose = goal_pose
+            goal_msg.behavior_tree = ''  # use default BT
 
         self.get_logger().info(
             f'Sending navigation goal to x={goal_pose.pose.position.x:.2f}, '

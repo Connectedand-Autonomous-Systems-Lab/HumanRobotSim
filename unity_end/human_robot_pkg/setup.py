@@ -35,7 +35,8 @@ setup(
             'image_visualiser = human_robot_pkg.image_subscriber:main',
             'point_to_nav_goal = human_robot_pkg.point_to_nav_goal:main',
             'scan_limiter = human_robot_pkg.scan_limiter:main',
-            'frontier_navigator = human_robot_pkg.frontier_navigator:main'
+            'frontier_navigator = human_robot_pkg.frontier_navigator:main',
+            'checker = human_robot_pkg.check_nav2_slam_ready:main',
         ],
     },
 )
