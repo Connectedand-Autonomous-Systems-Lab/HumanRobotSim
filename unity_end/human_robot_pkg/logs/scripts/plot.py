@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import os
 from matplotlib.ticker import ScalarFormatter
 
-csv_dir = '/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg/logs/user_study/Concord_M/akhita/easy'
+csv_dir = '/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg/logs/Concord'
 csv_path = os.path.expanduser(csv_dir + '/log.csv')
 
 df = pd.read_csv(csv_path)

@@ -15,6 +15,8 @@ class MapLoggerNode(Node):
     def __init__(self):
         super().__init__('map_logger_node')
 
+        self.declare_parameter('base_dir', 'logs/Concord')
+        relative_path = self.get_parameter('base_dir').get_parameter_value().string_value
         # Subscriptions
         self.human_map_sub = self.create_subscription(
             OccupancyGrid,
@@ -94,7 +96,7 @@ class MapLoggerNode(Node):
         # Setup persistent CSV file object
         package_src_dir = os.path.dirname(os.path.realpath(__file__))
         package_dir = os.path.abspath(os.path.join(package_src_dir, '..'))
-        relative_path = 'logs/user_study/yang/hard'
+        
         self.output_file_path = os.path.join(package_dir, relative_path, 'log.csv')
         os.makedirs(os.path.join(package_dir, relative_path), exist_ok=True)
 

@@ -216,7 +216,8 @@ def generate_launch_description():
 
     map_logger = Node(
         package="human_robot_pkg",
-        executable="map_logger"
+        executable="map_logger",
+        parameters=[{'base_dir': 'results/uncoordinated'}]
     )
 
     return LaunchDescription({
@@ -244,7 +245,7 @@ def generate_launch_description():
         
         human_bag,
         # scan_limiter,
-        # map_logger,
+        map_logger,
         odom_publisher,
         wavefront_frontier_publisher,
     })
