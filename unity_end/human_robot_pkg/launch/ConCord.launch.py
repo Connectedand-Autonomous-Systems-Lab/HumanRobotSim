@@ -199,7 +199,7 @@ def generate_launch_description():
     )
     
     human_bag = ExecuteProcess(
-            cmd=['ros2', 'bag', 'play', '/media/2TB/Collaborative_user_study/Bimal/Hard/rosbag2_2025_12_04-17_01_38', ],
+            cmd=['ros2', 'bag', 'play', '/home/mayooran/Documents/iros/src/DRL-exploration/dataset/sample_run', ],
             output='screen'
         )
     

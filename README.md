@@ -19,7 +19,7 @@ This simulation is intent to run along with Unity. First setup Unity Scene block
    - ros-humble-rviz2
    - ros-humble-tf2-ros
 
-## Run a complete demonstration saved in a ros bag
+## Run a complete demonstration saved in a ros bag (under development)
 
 The following code brings up an instance from the dataset and how Concord worked on a simulated robot in Unity along with that human.
 
@@ -29,25 +29,42 @@ ros2 launch collaborate demonstration.launch.py
 
 ## Run a robot asynchronously with a user run
 
-The following will run an instance from the dataset along with a robot in Unity. Refer the following link for the dataset. [Dataset Documentation](readme_files/dataset_README.md)
+The following will run an instance from the dataset along with a robot in Unity. A sample run of the dataset is included in the dataset folder [sample run](sample_run/rosbag2_2025_12_04-17_01_38_0.db3). Change the path of the folder if necessary in line 202 of [launch file](unity_end/human_robot_pkg/launch/ConCord.launch.py). Refer the following link for the [Dataset Documentation](readme_files/dataset_README.md)
+
+1. Start the Unity and play HardScene.scene. [Unity repository](https://github.com/Connected-and-Autonomous-Systems-Lab/Collaboration.git)
+2. Build the ros workspace using:
 
 ```bash
-ros2 launch human_robot_pkg human_in_the_loop.launch.py
+colcon build --symlink-install
 ```
 
-Make sure you disable the human player in the Unity scene as you are just using the previous run of the human run.
+3. Open three terminals and run the following.
+
+```bash
+cd $(ros_workspace)
+source install/setup.bash
+```
+
+4. Terminal 1: Run the launch file to start uncoordinated explo-
+ration.
+
+```bash
+ros2 launch human_robot_pkg ConCord.launch.py
+```
+
+5. Terminal 2: Run nav2 launch file.
 
 ```bash
 ros2 launch human_robot_pkg navigation_highlevel.launch.py
 ```
 
-Finally,
+6. Terminal 3: Run the uncoordinated exploration.
 
 ```bash
 ros2 run human_robot_pkg frontier_navigator
 ```
 
-You will see the robot from Unity will start to complement the human player and search for human victims.
+7. Visualize the RViz2 window while the robot runs in Unity. The log file for the result comparison will be saved. We suggest running both experiments for 10 minutes.
 
 <img src="readme_files/Simple_robot_on_unity_timelapse.gif" width="60%" />
 
