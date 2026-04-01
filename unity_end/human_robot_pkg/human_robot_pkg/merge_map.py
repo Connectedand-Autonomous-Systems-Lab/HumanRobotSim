@@ -104,7 +104,7 @@ class MapMerger(Node):
 
                 merged_msg = OccupancyGrid()
                 merged_msg.header.stamp = self.get_clock().now().to_msg()
-                merged_msg.header.frame_id = "map"
+                merged_msg.header.frame_id = "merged_map"
                 merged_msg.info.resolution = resolution
                 merged_msg.info.width = merged_width
                 merged_msg.info.height = merged_height

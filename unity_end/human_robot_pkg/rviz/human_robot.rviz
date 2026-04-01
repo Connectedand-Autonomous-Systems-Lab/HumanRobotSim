@@ -4,6 +4,7 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
+        - /Global Options1
         - /Wavefront_frontier_detector1
       Splitter Ratio: 0.4735293984413147
     Tree Height: 350
@@ -511,8 +512,7 @@ Visualization Manager:
           Enabled: true
           Name: MarkerArray
           Namespaces:
-            frontier_centroids: true
-            frontier_middles: true
+            {}
           Topic:
             Depth: 5
             Durability Policy: Volatile
@@ -546,7 +546,7 @@ Visualization Manager:
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: map
+    Fixed Frame: merged_map
     Frame Rate: 30
   Name: root
   Tools:
@@ -596,9 +596,9 @@ Visualization Manager:
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 26.014236450195312
-        Y: -16.1759033203125
-        Z: 3.8051395416259766
+        X: 63.45430374145508
+        Y: -20.17310905456543
+        Z: 3.76768159866333
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
@@ -607,7 +607,7 @@ Visualization Manager:
       Pitch: 1.5697963237762451
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 6.228598594665527
+      Yaw: 6.278599262237549
     Saved: ~
 Window Geometry:
   Displays:

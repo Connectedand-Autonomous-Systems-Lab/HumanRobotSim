@@ -6,13 +6,19 @@ from ament_index_python.packages import get_package_share_directory
 from launch_ros.actions import Node, PushRosNamespace
 from launch.substitutions import LaunchConfiguration
 
+def find_rosbag(parent_dir):
+    folders = os.listdir(parent_dir)
+    for folder in folders:
+        if folder.startswith("rosbag2"):
+            return parent_dir + "/" + folder
+
 def generate_launch_description():
     package_name = 'human_robot_pkg'
     package_dir = get_package_share_directory(package_name)
     bringup_dir = get_package_share_directory('nav2_bringup')
-
+    
     human_bag = ExecuteProcess(
-        cmd=['ros2', 'bag', 'play', '/media/2TB/Collaborative_user_study/Bimal/Hard/rosbag2_2025_12_04-17_01_38'],
+        cmd=['ros2', 'bag', 'play', find_rosbag('/media/2TB/Collaborative_user_study_real_world/Raj/run1')],
         output='screen'
     )
     

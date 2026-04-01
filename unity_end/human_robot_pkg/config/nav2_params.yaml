@@ -11,7 +11,7 @@ amcl:
     beam_skip_error_threshold: 0.9
     beam_skip_threshold: 0.3
     do_beamskip: false
-    global_frame_id: "map"
+    global_frame_id: "merged_map"
     lambda_short: 0.1
     laser_likelihood_max_dist: 2.0
     laser_max_range: 100.0
@@ -42,7 +42,7 @@ amcl:
 bt_navigator:
   ros__parameters:
     use_sim_time: True
-    global_frame: map
+    global_frame: merged_map
     robot_base_frame: Robot
     odom_topic: odom
     bt_loop_duration: 10
@@ -227,7 +227,7 @@ global_costmap:
     ros__parameters:
       update_frequency: 1.0
       publish_frequency: 1.0
-      global_frame: map
+      global_frame: merged_map
       robot_base_frame: Robot
       use_sim_time: True
       robot_radius: 0.175
