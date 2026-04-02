@@ -22,7 +22,7 @@ class FrontierNavigator(Node):
         self.declare_parameter('blacklist_radius', 0.2)
         self.declare_parameter('navigation_action_server', 'navigate_to_pose')
         # self.goal_refresh_timeout = float(self.get_parameter('goal_refresh_timeout').value)
-        self.goal_refresh_timeout = 30.0
+        self.goal_refresh_timeout = float(self.get_parameter('goal_refresh_timeout').value)
         self.last_goal_time = None
         self.blacklist_radius = float(self.get_parameter('blacklist_radius').value)
         self.latest_frontiers = PoseArray()
@@ -93,6 +93,7 @@ class FrontierNavigator(Node):
                 self.get_logger().debug('Ignoring new frontiers until refresh timeout elapses.')
                 return
             self.get_logger().warn('Refresh timeout hit, preempting current goal for new frontier.')
+            self.navigating = False
         elif self.navigating:
             self.get_logger().warn('Goal refresh error. Continring to navigate to current frontier until it is reached or aborted.')
             return
@@ -132,8 +133,11 @@ class FrontierNavigator(Node):
         
     def send_navigation_goal(self, goal_pose: PoseStamped):
         """Send a NavigateToPose goal to Nav2."""
-        # if self.navigating:
-        #     return
+        if self.navigating:
+            return
+        
+        self.navigating = True
+        self._current_goal = goal_pose
         self.nav_client.wait_for_server()
 
         if 'navigate_to_position' in self.navigation_action_server:
@@ -155,7 +159,7 @@ class FrontierNavigator(Node):
             feedback_callback=self.feedback_callback
         )
         send_goal_future.add_done_callback(self.goal_response_callback)
-        self._current_goal = goal_pose
+        
 
     def goal_response_callback(self, future):
         """Called when the action server accepts or rejects the goal."""
@@ -166,7 +170,7 @@ class FrontierNavigator(Node):
             self.navigating = False
             return
 
-        self.navigating = True
+        # self.navigating = True
         self.last_goal_time = self.get_clock().now()
         # self.get_logger().info('Navigation goal accepted.')
         get_result_future = goal_handle.get_result_async()
