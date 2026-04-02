@@ -1,0 +1,139 @@
+{
+  "map_image": "/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg/results/Interest_region/W3_controlled_experiment/100/final_map.png",
+  "map_metadata": "/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg/results/Interest_region/W3_controlled_experiment/100/final_map_metadata.json",
+  "box_count": 13,
+  "explored_cells_in_box_union": 291822,
+  "total_cells_in_box_union": 503931,
+  "boxes": [
+    {
+      "region": "Tturn",
+      "box_index": 1,
+      "x_min": 1357,
+      "y_min": 0,
+      "x_max": 1597,
+      "y_max": 219,
+      "explored_cells": 41695,
+      "total_cells": 53020
+    },
+    {
+      "region": "Tturn",
+      "box_index": 2,
+      "x_min": 0,
+      "y_min": 539,
+      "x_max": 197,
+      "y_max": 779,
+      "explored_cells": 41663,
+      "total_cells": 47718
+    },
+    {
+      "region": "Tturn",
+      "box_index": 3,
+      "x_min": 517,
+      "y_min": 539,
+      "x_max": 757,
+      "y_max": 779,
+      "explored_cells": 41892,
+      "total_cells": 58081
+    },
+    {
+      "region": "Tturn",
+      "box_index": 4,
+      "x_min": 2477,
+      "y_min": 259,
+      "x_max": 2703,
+      "y_max": 499,
+      "explored_cells": 41649,
+      "total_cells": 54707
+    },
+    {
+      "region": "Tturn",
+      "box_index": 5,
+      "x_min": 1357,
+      "y_min": 539,
+      "x_max": 1597,
+      "y_max": 779,
+      "explored_cells": 41199,
+      "total_cells": 58081
+    },
+    {
+      "region": "Tturn",
+      "box_index": 6,
+      "x_min": 1077,
+      "y_min": 1099,
+      "x_max": 1317,
+      "y_max": 1339,
+      "explored_cells": 0,
+      "total_cells": 58081
+    },
+    {
+      "region": "Tturn",
+      "box_index": 7,
+      "x_min": 237,
+      "y_min": 1379,
+      "x_max": 477,
+      "y_max": 1619,
+      "explored_cells": 0,
+      "total_cells": 58081
+    },
+    {
+      "region": "Tturn",
+      "box_index": 8,
+      "x_min": 1917,
+      "y_min": 1379,
+      "x_max": 2157,
+      "y_max": 1619,
+      "explored_cells": 41728,
+      "total_cells": 58081
+    },
+    {
+      "region": "Tturn",
+      "box_index": 9,
+      "x_min": 2197,
+      "y_min": 1379,
+      "x_max": 2437,
+      "y_max": 1619,
+      "explored_cells": 41996,
+      "total_cells": 58081
+    },
+    {
+      "region": "Tturn",
+      "box_index": 10,
+      "x_min": -1,
+      "y_min": -1,
+      "x_max": -1,
+      "y_max": -1,
+      "explored_cells": 0,
+      "total_cells": 0
+    },
+    {
+      "region": "Tturn",
+      "box_index": 11,
+      "x_min": -1,
+      "y_min": -1,
+      "x_max": -1,
+      "y_max": -1,
+      "explored_cells": 0,
+      "total_cells": 0
+    },
+    {
+      "region": "Tturn",
+      "box_index": 12,
+      "x_min": -1,
+      "y_min": -1,
+      "x_max": -1,
+      "y_max": -1,
+      "explored_cells": 0,
+      "total_cells": 0
+    },
+    {
+      "region": "Tturn",
+      "box_index": 13,
+      "x_min": -1,
+      "y_min": -1,
+      "x_max": -1,
+      "y_max": -1,
+      "explored_cells": 0,
+      "total_cells": 0
+    }
+  ]
+}

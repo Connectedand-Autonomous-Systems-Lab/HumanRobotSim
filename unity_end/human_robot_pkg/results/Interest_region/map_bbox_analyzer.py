@@ -16,7 +16,7 @@ def parse_args() -> argparse.Namespace:
         description="Project interest-region bounding boxes onto a saved map image and count explored cells."
     )
 
-    parent_dir = "src/DRL-exploration/unity_end/human_robot_pkg/results/Interest_region/W3_controlled_experiment/1000"
+    parent_dir = "src/DRL-exploration/unity_end/human_robot_pkg/results/Interest_region/W3_controlled_experiment/0"
     parser.add_argument("--map-image", default=parent_dir + "/final_map.png", help="Path to the saved map image.")
     parser.add_argument(
         "--map-metadata",

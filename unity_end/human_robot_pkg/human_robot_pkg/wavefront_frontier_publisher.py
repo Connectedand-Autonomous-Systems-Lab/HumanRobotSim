@@ -263,7 +263,7 @@ class FrontierSearch:
         # Same structure as explore_lite:
         # cost = potential_scale * min_distance*res - gain_scale * size*res
         inside_interest_region = is_inside_interest_region(f.middle, self.interest_region_bounding_boxes)
-        return (self.potential_scale * f.min_distance) - (self.gain_scale * f.size * self._res) - (100.0 * (100.0 if inside_interest_region else 0.0))
+        return (self.potential_scale * f.min_distance) - (self.gain_scale * f.size * self._res) - (self.interest_region_scale* (100.0 if inside_interest_region else 0.0))
 
     def search_from(self, robot_world: Point) -> List[Frontier]:
         if self._grid is None or self._map_costs is None:
@@ -358,7 +358,7 @@ class FrontierDetectorNode(Node):
         self.declare_parameter('publish_rate_hz', 1.0)
         self.declare_parameter('potential_scale', 50.0)
         self.declare_parameter('gain_scale', 0.01)
-        self.declare_parameter('interest_region_scale', 1000.0)
+        self.declare_parameter('interest_region_scale', 0.0)
         self.declare_parameter('min_frontier_size_m', 0.1)
         self.declare_parameter('min_wall_distance_m', 0.3)
         self.declare_parameter('frame_id', 'map')

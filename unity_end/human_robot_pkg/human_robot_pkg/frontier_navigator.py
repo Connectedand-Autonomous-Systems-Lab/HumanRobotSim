@@ -18,10 +18,9 @@ class FrontierNavigator(Node):
     def __init__(self):
         super().__init__('frontier_navigator')
 
-        self.declare_parameter('goal_refresh_timeout', 0.0)
+        self.declare_parameter('goal_refresh_timeout', 20.0)
         self.declare_parameter('blacklist_radius', 0.2)
         self.declare_parameter('navigation_action_server', 'navigate_to_pose')
-        # self.goal_refresh_timeout = float(self.get_parameter('goal_refresh_timeout').value)
         self.goal_refresh_timeout = float(self.get_parameter('goal_refresh_timeout').value)
         self.last_goal_time = None
         self.blacklist_radius = float(self.get_parameter('blacklist_radius').value)
@@ -30,6 +29,8 @@ class FrontierNavigator(Node):
 
         self._blacklisted_frontiers = []
         self._current_goal = None
+        self._goal_handle = None
+        self._pending_goal = None
 
         self.human_position = None
         self.robot_position = None
@@ -82,27 +83,48 @@ class FrontierNavigator(Node):
         self.get_logger().info('FrontierNavigator node started.')
 
     def navigate_to_frontier(self):
-        ###########################################################
-        # This is the goal assignment logic that runs periodically. It checks if we have frontiers and whether we should send a new goal.
         if not self.latest_frontiers.poses:
             self.get_logger().warn('No frontiers available to navigate to.')
             return
-        elif self.navigating and self.goal_refresh_timeout > 0.0 and self.last_goal_time is not None:
+
+        if self.navigating and self.goal_refresh_timeout > 0.0 and self.last_goal_time is not None:
             elapsed = (self.get_clock().now() - self.last_goal_time).nanoseconds / 1e9
             if elapsed < self.goal_refresh_timeout:
                 self.get_logger().debug('Ignoring new frontiers until refresh timeout elapses.')
                 return
-            self.get_logger().warn('Refresh timeout hit, preempting current goal for new frontier.')
-            self.navigating = False
-        elif self.navigating:
-            self.get_logger().warn('Goal refresh error. Continring to navigate to current frontier until it is reached or aborted.')
-            return
-        else:
-            self.get_logger().debug('Assessing new frontiers to navigate to.')
-        ###############################################################
 
-        # latest_frontiers are the sorted frontiers from frontier publishing node according to their cost.
-        # frontier_publisher orders poses by ascending cost, so choose the first allowed frontier
+            self.get_logger().warn('Refresh timeout hit, cancelling current goal for new frontier.')
+
+            selected_pose = None
+            for pose in self.latest_frontiers.poses:
+                if not self._is_blacklisted(pose):
+                    selected_pose = pose
+                    break
+
+            if selected_pose is None:
+                self.get_logger().warn('All received frontiers are currently blacklisted.')
+                return
+
+            selected_ps = PoseStamped()
+            selected_ps.header = self.latest_frontiers.header
+            selected_ps.pose = selected_pose
+            self._pending_goal = selected_ps
+
+            if self._goal_handle is not None:
+                cancel_future = self._goal_handle.cancel_goal_async()
+                cancel_future.add_done_callback(self.cancel_done_callback)
+            else:
+                self.get_logger().warn('No active goal handle found; sending pending goal immediately.')
+                self.navigating = False
+                pending = self._pending_goal
+                self._pending_goal = None
+                self.send_navigation_goal(pending)
+            return
+
+        elif self.navigating:
+            return
+
+        # idle case: pick and send a goal
         selected_pose = None
         for pose in self.latest_frontiers.poses:
             if not self._is_blacklisted(pose):
@@ -113,15 +135,11 @@ class FrontierNavigator(Node):
             self.get_logger().warn('All received frontiers are currently blacklisted.')
             return
 
-        # Create PoseStamped from selected pose
         selected_ps = PoseStamped()
-        selected_ps.header = self.latest_frontiers.header      # use same frame as PoseArray (e.g. "map")
+        selected_ps.header = self.latest_frontiers.header
         selected_ps.pose = selected_pose
 
-        # Publish selected frontier
         self.selected_frontier_pub.publish(selected_ps)
-
-        # Send navigation goal
         self.send_navigation_goal(selected_ps)
 
     def frontier_callback(self, msg: PoseArray):
@@ -168,11 +186,12 @@ class FrontierNavigator(Node):
         if not goal_handle.accepted:
             self.get_logger().warn('Navigation goal was rejected by server.')
             self.navigating = False
+            self._current_goal = None
+            self._goal_handle = None
             return
 
-        # self.navigating = True
+        self._goal_handle = goal_handle
         self.last_goal_time = self.get_clock().now()
-        # self.get_logger().info('Navigation goal accepted.')
         get_result_future = goal_handle.get_result_async()
         get_result_future.add_done_callback(self.result_callback)
 
@@ -199,11 +218,30 @@ class FrontierNavigator(Node):
         status_str_list = [ 'UNKNOWN', 'ACCEPTED', 'EXECUTING', 'CANCELING', 'SUCCEEDED', 'CANCELLED', 'ABORTED' ]
         self.get_logger().info(f'Navigation finished with status={status_str_list[status]}')
         self.get_logger().info(f'_____________________________________________________________')
-        if status == GoalStatus.STATUS_ABORTED or status == GoalStatus.STATUS_SUCCEEDED:
+        if status == GoalStatus.STATUS_ABORTED:
             self._blacklist_current_goal()
+
         self.navigating = False
         self._current_goal = None
-        self.navigate_to_frontier()
+        self._goal_handle = None
+    
+    def cancel_done_callback(self, future):
+        try:
+            cancel_response = future.result()
+        except Exception as e:
+            self.get_logger().error(f'Failed to cancel current goal: {e}')
+            return
+
+        self.get_logger().info('Current navigation goal cancelled.')
+
+        self.navigating = False
+        self._goal_handle = None
+        self._current_goal = None
+
+        if self._pending_goal is not None:
+            pending = self._pending_goal
+            self._pending_goal = None
+            self.send_navigation_goal(pending)
 
     def human_odom_callback(self, msg: Odometry):
         """Called whenever a new human odometry message is received."""
