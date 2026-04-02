@@ -2,11 +2,10 @@ import rclpy
 from rclpy.node import Node
 from nav_msgs.msg import OccupancyGrid, Odometry
 from std_msgs.msg import String 
-from geometry_msgs.msg import PoseWithCovarianceStamped, PoseStamped
 import math
 import csv
+import json
 import os
-from ament_index_python.packages import get_package_share_directory
 import cv2
 import numpy as np
 from rclpy.time import Time
@@ -15,7 +14,7 @@ class MapLoggerNode(Node):
     def __init__(self):
         super().__init__('map_logger_node')
 
-        self.declare_parameter('base_dir', 'logs/Concord')
+        self.declare_parameter('base_dir', 'src/DRL-exploration/unity_end/human_robot_pkg/results/Interest_region')
         relative_path = self.get_parameter('base_dir').get_parameter_value().string_value
         # Subscriptions
         self.human_map_sub = self.create_subscription(
@@ -96,15 +95,66 @@ class MapLoggerNode(Node):
         # Setup persistent CSV file object
         package_src_dir = os.path.dirname(os.path.realpath(__file__))
         package_dir = os.path.abspath(os.path.join(package_src_dir, '..'))
-        
-        self.output_file_path = os.path.join(package_dir, relative_path, 'log.csv')
-        os.makedirs(os.path.join(package_dir, relative_path), exist_ok=True)
+        self.output_dir = os.path.join(package_dir, relative_path)
+        os.makedirs(self.output_dir, exist_ok=True)
+
+        self.output_file_path = os.path.join(self.output_dir, 'log.csv')
 
         self.csv_file = open(self.output_file_path, 'w', newline='')
         self.csv_writer = csv.writer(self.csv_file)
         self.csv_writer.writerow(['Time Elapsed (s)', 'tb exploration', 'tb trajectory', 'human exploration', 'human trajectory', 'merged exploration', 'human detections', 'tb3 detections', 'total detections'])
 
         self.get_logger().info(f"Logging started: {self.output_file_path}")
+
+    def _occupancy_grid_to_image(self, msg):
+        width = msg.info.width
+        height = msg.info.height
+        map_data = np.array(msg.data, dtype=np.int8).reshape((height, width))
+
+        image = np.zeros((height, width), dtype=np.uint8)
+        image[map_data == -1] = 127
+        image[map_data == 0] = 255
+        image[map_data == 100] = 0
+
+        return np.flipud(image)
+
+    def _save_map_artifacts(self, msg, image_path, metadata_path=None):
+        image = self._occupancy_grid_to_image(msg)
+        cv2.imwrite(image_path, image)
+
+        if metadata_path is None:
+            return
+
+        metadata = {
+            'image_path': os.path.abspath(image_path),
+            'resolution': msg.info.resolution,
+            'width': msg.info.width,
+            'height': msg.info.height,
+            'origin': {
+                'x': msg.info.origin.position.x,
+                'y': msg.info.origin.position.y,
+                'z': msg.info.origin.position.z,
+            },
+            'occupied_value': 0,
+            'free_value': 255,
+            'unknown_value': 127,
+            'frame_id': msg.header.frame_id,
+        }
+
+        with open(metadata_path, 'w', encoding='utf-8') as metadata_file:
+            json.dump(metadata, metadata_file, indent=2)
+
+    def _save_final_map(self):
+        if self.merged_map_data is None:
+            self.get_logger().warn("No merged map received. Skipping final map export.")
+            return
+
+        image_path = os.path.join(self.output_dir, 'final_map.png')
+        metadata_path = os.path.join(self.output_dir, 'final_map_metadata.json')
+        self._save_map_artifacts(self.merged_map_data, image_path, metadata_path)
+        self.get_logger().info(
+            f"Saved final merged map to {image_path} and metadata to {metadata_path}"
+        )
 
     def human_map_callback(self, msg):
         self.human_map_data = msg
@@ -141,29 +191,9 @@ class MapLoggerNode(Node):
     def merged_map_callback(self, msg):
         self.merged_map_data = msg
         if self.save_map:
-            width = msg.info.width
-            height = msg.info.height
-            map_data = np.array(msg.data, dtype=np.int8).reshape((height, width))
-
-            # Convert occupancy values to grayscale image
-            # -1 (unknown) -> 127 (gray)
-            # 0 (free)     -> 255 (white)
-            # 100 (occupied) -> 0 (black)
-            image = np.zeros((height, width), dtype=np.uint8)
-            image[map_data == -1] = 127
-            image[map_data == 0] = 255
-            image[map_data == 100] = 0
-
-            # Flip vertically to match visual orientation
-            image = np.flipud(image)
-
-            # Create directory if needed
-            package_src_dir = os.path.dirname(os.path.realpath(__file__))
-            package_dir = os.path.abspath(os.path.join(package_src_dir, '..'))
-            self.costmaps_path = os.path.join(package_dir, 'rosbag', 'costmaps')
+            self.costmaps_path = os.path.join(self.output_dir, 'costmaps')
             os.makedirs(self.costmaps_path, exist_ok=True)
 
-            # Inside your callback
             if self.start_time is None:
                 self.start_time = Time.from_msg(msg.header.stamp)
 
@@ -171,9 +201,8 @@ class MapLoggerNode(Node):
             elapsed_time = (current_time - self.start_time).nanoseconds / 1e9
             elapsed_str = f"{elapsed_time:.2f}".replace('.', '_')  # Replace dot to make valid filename
 
-            # Save the image
             file_path = os.path.join(self.costmaps_path, f'{elapsed_str}.png')
-            cv2.imwrite(file_path, image)
+            self._save_map_artifacts(msg, file_path)
 
             # self.get_logger().info(f"Map saved to {file_path}")
 
@@ -227,6 +256,7 @@ class MapLoggerNode(Node):
             self.tb3_detection_list.append(msg.data)
 
     def destroy_node(self):
+        self._save_final_map()
         self.csv_file.close()
         self.get_logger().info("Shutting down. Closing log file.")
         
@@ -242,8 +272,6 @@ def main(args=None):
         node.get_logger().info("KeyboardInterrupt received.")
     finally:
         node.destroy_node()
-        if rclpy.ok():  # only destroy if context still active
-            rclpy.shutdown()
 
 if __name__ == '__main__':
     main()

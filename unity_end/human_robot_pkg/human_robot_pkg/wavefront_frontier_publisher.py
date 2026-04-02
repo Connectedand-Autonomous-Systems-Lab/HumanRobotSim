@@ -12,6 +12,10 @@ from rclpy.clock import Clock, ClockType
 from nav_msgs.msg import OccupancyGrid, Odometry
 from geometry_msgs.msg import PoseArray, Pose, Point
 from visualization_msgs.msg import Marker, MarkerArray
+from .interest_region_frontier_filter import (
+    get_bounding_boxes,
+    is_inside_interest_region,
+)
 
 
 # ----------------------------
@@ -44,10 +48,12 @@ class FrontierSearch:
     def __init__(self,
                  potential_scale: float,
                  gain_scale: float,
+                 interest_region_scale: float,
                  min_frontier_size_m: float,
                  min_wall_distance_m: float):
         self.potential_scale = potential_scale
         self.gain_scale = gain_scale
+        self.interest_region_scale = interest_region_scale
         self.min_frontier_size_m = min_frontier_size_m
         self.min_wall_distance_m = min_wall_distance_m
 
@@ -59,6 +65,9 @@ class FrontierSearch:
         self._res: float = 0.0
         self._origin_x: float = 0.0
         self._origin_y: float = 0.0
+
+        # Interest region parameters
+        self.interest_region_bounding_boxes = get_bounding_boxes('/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg/tile_centers/Tturn_tile_centers.txt')
 
     # ---------- Map helpers ----------
     def set_map(self, grid: OccupancyGrid) -> None:
@@ -253,7 +262,8 @@ class FrontierSearch:
     def frontier_cost(self, f: Frontier) -> float:
         # Same structure as explore_lite:
         # cost = potential_scale * min_distance*res - gain_scale * size*res
-        return (self.potential_scale * f.min_distance) - (self.gain_scale * f.size * self._res)
+        inside_interest_region = is_inside_interest_region(f.middle, self.interest_region_bounding_boxes)
+        return (self.potential_scale * f.min_distance) - (self.gain_scale * f.size * self._res) - (1000.0 * (100.0 if inside_interest_region else 0.0))
 
     def search_from(self, robot_world: Point) -> List[Frontier]:
         if self._grid is None or self._map_costs is None:
@@ -348,6 +358,7 @@ class FrontierDetectorNode(Node):
         self.declare_parameter('publish_rate_hz', 1.0)
         self.declare_parameter('potential_scale', 50.0)
         self.declare_parameter('gain_scale', 0.01)
+        self.declare_parameter('interest_region_scale', 10000.0)
         self.declare_parameter('min_frontier_size_m', 0.1)
         self.declare_parameter('min_wall_distance_m', 0.3)
         self.declare_parameter('frame_id', 'map')
@@ -363,12 +374,14 @@ class FrontierDetectorNode(Node):
         publish_rate = float(self.get_parameter('publish_rate_hz').value)
         potential_scale = float(self.get_parameter('potential_scale').value)
         gain_scale = float(self.get_parameter('gain_scale').value)
+        interest_region_scale = float(self.get_parameter('interest_region_scale').value)
         min_frontier_size_m = float(self.get_parameter('min_frontier_size_m').value)
         min_wall_distance_m = float(self.get_parameter('min_wall_distance_m').value)
 
         self.searcher = FrontierSearch(
             potential_scale=potential_scale,
             gain_scale=gain_scale,
+            interest_region_scale=interest_region_scale,
             min_frontier_size_m=min_frontier_size_m,
             min_wall_distance_m=min_wall_distance_m
         )
@@ -430,6 +443,7 @@ class FrontierDetectorNode(Node):
 
         frontiers = self.searcher.search_from(robot)
 
+        self.get_logger().info(f"First frontier cost: {frontiers[0].cost:.2f}" if frontiers else "No frontiers found")
         # Publish PoseArray of "middle" points (closest-to-robot per cluster)
         pa = PoseArray()
         pa.header.stamp = self.get_clock().now().to_msg()

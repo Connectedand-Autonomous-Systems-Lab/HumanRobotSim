@@ -15,8 +15,7 @@ def generate_launch_description():
             os.path.join(get_package_share_directory('nav2_bringup'), 'launch', 'navigation_launch.py')
         ),
         launch_arguments={
-                          'use_sim_time': 'True',
-                          'params_file': os.path.join(get_package_share_directory('human_robot_pkg'), 'config', 'nav2_params.yaml'),
+                          'params_file': os.path.join('/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg', 'config', 'nav2_params.yaml'),
                         #   'params_file': os.path.join(bringup_dir, 'params', 'nav2_params.yaml'),
                           }.items())
     
@@ -27,7 +26,7 @@ def generate_launch_description():
             os.path.join(get_package_share_directory('nav2_bringup'), 'launch', 'bringup_launch.py')
         ),
         launch_arguments={
-                            'use_sim_time': 'True',
+                            'use_sim_time': 'False',
                             'map': os.path.join('/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg/maps/map2/map_1766076092.yaml') ,
                         #   'params_file': os.path.join(get_package_share_directory('human_robot_pkg'), 'config', 'tb3_0_nav2_params.yaml'),
                             'params_file': os.path.join(package_dir, 'config', 'nav2_params.yaml'),
@@ -123,6 +122,6 @@ def generate_launch_description():
         # delayed_nodes,
         # simple_navigator,
         # map_logger,
-        human_bag,
+        # human_bag,
         # frontier_navigator
     })

@@ -3,26 +3,34 @@ from rclpy.node import Node
 from nav_msgs.msg import OccupancyGrid
 import numpy as np
 import hashlib
+from rclpy.qos import QoSProfile, QoSDurabilityPolicy, QoSReliabilityPolicy, QoSHistoryPolicy
 
 class MapMerger(Node):
     def __init__(self):
         super().__init__('map_merger')
         self.get_logger().info('Map_merger started!')
 
+        map_qos = QoSProfile(
+            history=QoSHistoryPolicy.KEEP_LAST,
+            depth=1,
+            reliability=QoSReliabilityPolicy.RELIABLE,
+            durability=QoSDurabilityPolicy.TRANSIENT_LOCAL
+        )
+
         # Subscriptions to the two map topics
         self.sub_map1 = self.create_subscription(
             OccupancyGrid,
             '/human/map',
             self.map1_callback,
-            10
+            map_qos
         )
         self.sub_map2 = self.create_subscription(
             OccupancyGrid,
             '/map',
             self.map2_callback,
-            10
+            map_qos
         )
-        self.pub_merged_map = self.create_publisher(OccupancyGrid, '/merged_map', 10)
+        self.pub_merged_map = self.create_publisher(OccupancyGrid, '/merged_map', map_qos)
 
         # Store maps
         self.map1 = None
@@ -102,8 +110,12 @@ class MapMerger(Node):
                 place_map(self.map1)
                 place_map(self.map2)
 
+                latest_timestamp = max(
+                    (self.map1.header.stamp, self.map2.header.stamp),
+                    key=lambda stamp: (stamp.sec, stamp.nanosec)
+                )               
                 merged_msg = OccupancyGrid()
-                merged_msg.header.stamp = self.get_clock().now().to_msg()
+                merged_msg.header.stamp = latest_timestamp
                 merged_msg.header.frame_id = "merged_map"
                 merged_msg.info.resolution = resolution
                 merged_msg.info.width = merged_width

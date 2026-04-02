@@ -216,7 +216,12 @@ def generate_launch_description():
     map_logger = Node(
         package="human_robot_pkg",
         executable="map_logger",
-        parameters=[{'base_dir': 'results/Concord'}]
+        parameters=[{'base_dir': '/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg/results/Interest_region/W3_controlled_experiment/test'}]
+  )
+
+    interest_region_frontier_filter = Node(
+        package="human_robot_pkg",
+        executable="interest_region_frontier_filter"
     )
 
     return LaunchDescription({
@@ -247,4 +252,5 @@ def generate_launch_description():
         map_logger,
         odom_publisher,
         wavefront_frontier_publisher,
+        interest_region_frontier_filter,
     })

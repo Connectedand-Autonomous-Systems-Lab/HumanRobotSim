@@ -19,7 +19,7 @@ class FrontierNavigator(Node):
         super().__init__('frontier_navigator')
 
         self.declare_parameter('goal_refresh_timeout', 0.0)
-        self.declare_parameter('blacklist_radius', 0.5)
+        self.declare_parameter('blacklist_radius', 0.2)
         self.declare_parameter('navigation_action_server', 'navigate_to_pose')
         # self.goal_refresh_timeout = float(self.get_parameter('goal_refresh_timeout').value)
         self.goal_refresh_timeout = 30.0
@@ -82,6 +82,8 @@ class FrontierNavigator(Node):
         self.get_logger().info('FrontierNavigator node started.')
 
     def navigate_to_frontier(self):
+        ###########################################################
+        # This is the goal assignment logic that runs periodically. It checks if we have frontiers and whether we should send a new goal.
         if not self.latest_frontiers.poses:
             self.get_logger().warn('No frontiers available to navigate to.')
             return
@@ -96,7 +98,9 @@ class FrontierNavigator(Node):
             return
         else:
             self.get_logger().debug('Assessing new frontiers to navigate to.')
+        ###############################################################
 
+        # latest_frontiers are the sorted frontiers from frontier publishing node according to their cost.
         # frontier_publisher orders poses by ascending cost, so choose the first allowed frontier
         selected_pose = None
         for pose in self.latest_frontiers.poses:
@@ -218,11 +222,11 @@ class FrontierNavigator(Node):
                 return True
             
         """Check if the frontier is too close to the human trajectory"""
-        if self.human_trajectory:
-            for point in self.human_trajectory:
-                dist = math.hypot(px - point.x, py - point.y)
-                if dist <= self.human_trajectory_threshold:  # threshold distance
-                    return True
+        # if self.human_trajectory:
+        #     for point in self.human_trajectory:
+        #         dist = math.hypot(px - point.x, py - point.y)
+        #         if dist <= self.human_trajectory_threshold:  # threshold distance
+        #             return True
         return False
 
     def _blacklist_current_goal(self):

@@ -229,7 +229,8 @@ global_costmap:
       publish_frequency: 1.0
       global_frame: merged_map
       robot_base_frame: Robot
-      use_sim_time: True
+      map_topic: /merged_map
+      use_sim_time: False
       robot_radius: 0.175
       resolution: 0.06
       track_unknown_space: true
@@ -239,7 +240,7 @@ global_costmap:
         enabled: True
         observation_sources: scan
         scan:
-          topic: scan
+          topic: /scan
           max_obstacle_height: 2.0
           clearing: True
           marking: True
@@ -251,6 +252,7 @@ global_costmap:
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
         map_subscribe_transient_local: True
+        map_topic: /merged_map
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 4.0

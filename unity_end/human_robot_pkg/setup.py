@@ -14,7 +14,8 @@ setup(
         ('share/' + package_name, ['package.xml']),
         (os.path.join('share', package_name, 'launch'), glob(os.path.join('launch', '*launch.[pxy][yma]*'))),
         (os.path.join('share', package_name, 'config'), glob(os.path.join('config', '*.yaml'))),
-        (os.path.join('share', package_name, 'config'), glob(os.path.join('params', '*.yaml')))
+        (os.path.join('share', package_name, 'config'), glob(os.path.join('params', '*.yaml'))),
+        (os.path.join('share', package_name, 'tile_centers'), glob(os.path.join('tile_centers', '*.txt'))),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -37,6 +38,7 @@ setup(
             'scan_limiter = human_robot_pkg.scan_limiter:main',
             'frontier_navigator = human_robot_pkg.frontier_navigator:main',
             'checker = human_robot_pkg.check_nav2_slam_ready:main',
+            'interest_region_frontier_filter = human_robot_pkg.interest_region_frontier_filter:main',
         ],
     },
 )

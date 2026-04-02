@@ -45,6 +45,14 @@ cd $(ros_workspace)
 source install/setup.bash
 ```
 
+quick commands
+
+```bash
+conda deactivate
+cd ~/Documents/iros
+source install/setup.bash
+```
+
 4. Terminal 1: Run the launch file to start uncoordinated explo-
 ration.
 
@@ -91,3 +99,17 @@ The C extension '/opt/ros/humble/lib/python3.10/site-packages/_rclpy_pybind11.cp
 
 Solution:
 Deactivate the conda environments(deactivate even base) to go to the python version you initially installed ROS2 on. Run the python file then
+
+
+### 3. Transform data too old in Controller server
+
+```bash
+[controller_server-1] [ERROR] [1775093646.921101943] [tf_help]: Transform data too old when converting from merged_map to odom
+[controller_server-1] [ERROR] [1775093646.921150245] [tf_help]: Data time: 1775093630s 747304384ns, Transform time: 65s 606661987ns
+[controller_server-1] [ERROR] [1775093646.967835670] [controller_server]: Failed to make progress
+[controller_server-1] [WARN] [1775093646.967952823] [controller_server]: [follow_path] [ActionServer] Aborting handle.
+[bt_navigator-5] [WARN] [1775093646.996778421] [bt_navigator]: [navigate_to_pose] [ActionServer] Aborting handle.
+[bt_navigator-5] [ERROR] [1775093646.996926037] [bt_navigator]: Goal failed
+```
+
+Some node is publishing old time. Most probably system time instead of ROS sim time.
