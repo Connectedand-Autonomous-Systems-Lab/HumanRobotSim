@@ -230,7 +230,7 @@ global_costmap:
       global_frame: merged_map
       robot_base_frame: Robot
       map_topic: /merged_map
-      use_sim_time: False
+      use_sim_time: True
       robot_radius: 0.175
       resolution: 0.06
       track_unknown_space: true

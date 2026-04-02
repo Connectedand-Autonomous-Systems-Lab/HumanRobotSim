@@ -49,9 +49,10 @@ def generate_launch_description():
             os.path.join(get_package_share_directory('nav2_bringup'), 'launch', 'navigation_launch.py')
         ),
         launch_arguments={
-                          'use_sim_time': 'True',
+                          
                           'params_file': os.path.join(get_package_share_directory('human_robot_pkg'), 'config', 'nav2_params.yaml'),
                         #   'params_file': os.path.join(bringup_dir, 'params', 'nav2_params.yaml'),
+                           'use_sim_time': 'True',
                           }.items())
     
     # ros2 launch nav2_bringup navigation_launch.py params_file:=/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg/config/nav2_params.yaml
@@ -159,8 +160,8 @@ def generate_launch_description():
             os.path.join(get_package_share_directory('slam_toolbox'), 'launch', 'online_async_launch.py')
         ),
         launch_arguments={
-            'use_sim_time': 'true',
             'slam_params_file': os.path.join(get_package_share_directory('human_robot_pkg'), 'config', 'robot.yaml'),
+            'use_sim_time': 'True',
         }.items()
     )   
 
@@ -173,13 +174,15 @@ def generate_launch_description():
     human_map_to_map = Node(
             package='tf2_ros',
             executable='static_transform_publisher',
-            arguments = ['--x', '0', '--y', '0', '--z', '1', '--yaw', '0', '--pitch', '0', '--roll', '0', '--frame-id', 'merged_map', '--child-frame-id', 'human/map']
+            arguments = ['--x', '0', '--y', '0', '--z', '1', '--yaw', '0', '--pitch', '0', '--roll', '0', '--frame-id', 'merged_map', '--child-frame-id', 'human/map'],
+            parameters=[{'use_sim_time':True}]
         )
 
     tb3_0_map_to_map = Node(
             package='tf2_ros',
             executable='static_transform_publisher',
-            arguments = ['--x', '0', '--y', '0', '--z', '1', '--yaw', '0', '--pitch', '0', '--roll', '0', '--frame-id', 'merged_map', '--child-frame-id', 'map']
+            arguments = ['--x', '0', '--y', '0', '--z', '1', '--yaw', '0', '--pitch', '0', '--roll', '0', '--frame-id', 'merged_map', '--child-frame-id', 'map'],
+            parameters=[{'use_sim_time':True}]
         )
 
     map_merge = Node(

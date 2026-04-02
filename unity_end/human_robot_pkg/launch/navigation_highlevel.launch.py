@@ -17,6 +17,7 @@ def generate_launch_description():
         launch_arguments={
                           'params_file': os.path.join('/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg', 'config', 'nav2_params.yaml'),
                         #   'params_file': os.path.join(bringup_dir, 'params', 'nav2_params.yaml'),
+                            'use_sim_time': 'True',
                           }.items())
     
     # ros2 launch nav2_bringup navigation_launch.py params_file:=/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg/config/nav2_params.yaml
