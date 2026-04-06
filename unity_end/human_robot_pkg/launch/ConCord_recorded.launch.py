@@ -15,7 +15,7 @@ def generate_launch_description():
         package='rviz2',
         executable='rviz2',
         output='screen',
-        arguments=['-d', 'src/DRL-exploration/unity_end/human_robot_pkg/rviz/human_robot.rviz', '--ros-args', '--log-level', 'fatal'],
+        arguments=['-d', 'src/unity_end/human_robot_pkg/rviz/human_robot.rviz', '--ros-args', '--log-level', 'fatal'],
         parameters=[{'use_sim_time':True}]
     )
     
