@@ -20,8 +20,8 @@ def load_data(csv_dir):
 
 
 # -----------------------load data-----------------------
-uncoordinated_df = load_data('uncoordinated')
-concord_df = load_data('Concord')
+uncoordinated_df = load_data('uncoordinated_recorded')
+concord_df = load_data('concord_recorded')
 
 time_col = 'Time Elapsed (s)'
 
