@@ -21,7 +21,7 @@ def generate_launch_description():
     )
 
     human_bag = ExecuteProcess(
-            cmd=['ros2', 'bag', 'play', 'src/DRL-exploration/unity_end/human_robot_pkg/rosbag/uncoordinated_human_robot', ],
+            cmd=['ros2', 'bag', 'play', 'src/unity_end/human_robot_pkg/rosbag/uncoordinated_human_robot', ],
             output='screen'
         )
 
