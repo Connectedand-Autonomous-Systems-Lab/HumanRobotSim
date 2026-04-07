@@ -14,8 +14,8 @@ class MapLoggerNode(Node):
     def __init__(self):
         super().__init__('map_logger_node')
 
-        self.declare_parameter('base_dir', 'src/DRL-exploration/unity_end/human_robot_pkg/results/Interest_region')
-        relative_path = self.get_parameter('base_dir').get_parameter_value().string_value
+        self.declare_parameter('base_dir', '/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg/results/Interest_region/temp')
+        base_dir = self.get_parameter('base_dir').get_parameter_value().string_value
         # Subscriptions
         self.human_map_sub = self.create_subscription(
             OccupancyGrid,
@@ -95,16 +95,22 @@ class MapLoggerNode(Node):
         # Setup persistent CSV file object
         package_src_dir = os.path.dirname(os.path.realpath(__file__))
         package_dir = os.path.abspath(os.path.join(package_src_dir, '..'))
-        self.output_dir = os.path.join(package_dir, relative_path)
+        self.output_dir = base_dir
         os.makedirs(self.output_dir, exist_ok=True)
 
         self.output_file_path = os.path.join(self.output_dir, 'log.csv')
+        self.robot_odom_file_path = os.path.join(self.output_dir, 'robot_odom.csv')
 
         self.csv_file = open(self.output_file_path, 'w', newline='')
         self.csv_writer = csv.writer(self.csv_file)
         self.csv_writer.writerow(['Time Elapsed (s)', 'tb exploration', 'tb trajectory', 'human exploration', 'human trajectory', 'merged exploration', 'human detections', 'tb3 detections', 'total detections'])
 
+        self.robot_odom_file = open(self.robot_odom_file_path, 'w', newline='')
+        self.robot_odom_writer = csv.writer(self.robot_odom_file)
+        self.robot_odom_writer.writerow(['timestamp_sec', 'x', 'y'])
+
         self.get_logger().info(f"Logging started: {self.output_file_path}")
+        self.get_logger().info(f"Robot odometry logging started: {self.robot_odom_file_path}")
 
     def _occupancy_grid_to_image(self, msg):
         width = msg.info.width
@@ -178,6 +184,11 @@ class MapLoggerNode(Node):
     def tb_pose_callback(self, msg):
         pose = msg.pose.pose
         x, y = pose.position.x, pose.position.y
+        stamp = Time.from_msg(msg.header.stamp).nanoseconds / 1e9
+
+        self.robot_odom_writer.writerow([f"{stamp:.9f}", x, y])
+        self.robot_odom_file.flush()
+
         # self.get_logger().info("inside pose callback")
         # self.get_logger().info(f"odom x: {x} y:{y}")
         if self.tb_previous_pose:
@@ -258,6 +269,7 @@ class MapLoggerNode(Node):
     def destroy_node(self):
         self._save_final_map()
         self.csv_file.close()
+        self.robot_odom_file.close()
         self.get_logger().info("Shutting down. Closing log file.")
         
         super().destroy_node()

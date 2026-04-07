@@ -1,0 +1,15 @@
+{
+  "image_path": "/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg/results/Interest_region/IRS_experiment/Bavan/0/final_map.png",
+  "resolution": 0.05000000074505806,
+  "width": 2806,
+  "height": 2133,
+  "origin": {
+    "x": -3.2526504217638195,
+    "y": -108.59611339031869,
+    "z": 0.0
+  },
+  "occupied_value": 0,
+  "free_value": 255,
+  "unknown_value": 127,
+  "frame_id": "merged_map"
+}

@@ -6,6 +6,15 @@ from ament_index_python.packages import get_package_share_directory
 from launch_ros.actions import Node, PushRosNamespace
 from launch.substitutions import LaunchConfiguration
 
+user = "Kasthuri" 
+IRS = 0
+
+def find_rosbag(parent_dir):
+    folders = os.listdir(parent_dir)
+    for folder in folders:
+        if folder.startswith("rosbag2"):
+            return parent_dir + "/" + folder
+        
 def generate_launch_description():
     package_name = 'human_robot_pkg'
     package_dir = get_package_share_directory(package_name)
@@ -40,7 +49,8 @@ def generate_launch_description():
         package='human_robot_pkg',
         executable='wavefront_frontier_publisher',
         output='screen',
-        parameters=[{'use_sim_time':True}]
+        parameters=[{'use_sim_time':True},
+                    {'interest_region_scale': float(IRS)},]
     )
 
     # ros2 run rviz2 rviz2 -d src/DRL-exploration/unity_end/human_robot_pkg/rviz/human_robot.rviz
@@ -202,7 +212,7 @@ def generate_launch_description():
     )
     
     human_bag = ExecuteProcess(
-            cmd=['ros2', 'bag', 'play', '/home/mayooran/Documents/iros/src/DRL-exploration/dataset/sample_run', ],
+            cmd=['ros2', 'bag', 'play', find_rosbag(f'/media/2TB/Collaborative_user_study/{user}/Hard'), ],
             output='screen'
         )
     
@@ -219,7 +229,7 @@ def generate_launch_description():
     map_logger = Node(
         package="human_robot_pkg",
         executable="map_logger",
-        parameters=[{'base_dir': '/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg/results/Interest_region/W3_controlled_experiment/0'}]
+        parameters=[{'base_dir': '/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg/results/Interest_region/IRS_experiment/'+ user + "/" + str(IRS)}]
   )
 
     interest_region_frontier_filter = Node(

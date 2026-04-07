@@ -1,0 +1,15 @@
+{
+  "image_path": "/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg/results/Interest_region/IRS_experiment/Kasthuri/1000/final_map.png",
+  "resolution": 0.05000000074505806,
+  "width": 2688,
+  "height": 2697,
+  "origin": {
+    "x": 2.7038580873694635,
+    "y": -136.7421374441883,
+    "z": 0.0
+  },
+  "occupied_value": 0,
+  "free_value": 255,
+  "unknown_value": 127,
+  "frame_id": "merged_map"
+}

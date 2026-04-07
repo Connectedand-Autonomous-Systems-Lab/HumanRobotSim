@@ -1,0 +1,15 @@
+{
+  "image_path": "/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg/results/Interest_region/IRS_experiment/Bimal/10/final_map.png",
+  "resolution": 0.05000000074505806,
+  "width": 2683,
+  "height": 2137,
+  "origin": {
+    "x": 3.195461794805645,
+    "y": -108.86227485553786,
+    "z": 0.0
+  },
+  "occupied_value": 0,
+  "free_value": 255,
+  "unknown_value": 127,
+  "frame_id": "merged_map"
+}

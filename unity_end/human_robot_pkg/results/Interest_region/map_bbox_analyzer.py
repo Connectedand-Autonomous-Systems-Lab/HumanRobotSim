@@ -9,6 +9,7 @@ from PIL import Image, ImageColor, ImageDraw
 
 
 BoundingBox = Tuple[Tuple[float, float], Tuple[float, float]]
+OdomSample = Tuple[float, float, float]
 
 
 def parse_args() -> argparse.Namespace:
@@ -16,7 +17,7 @@ def parse_args() -> argparse.Namespace:
         description="Project interest-region bounding boxes onto a saved map image and count explored cells."
     )
 
-    parent_dir = "src/DRL-exploration/unity_end/human_robot_pkg/results/Interest_region/W3_controlled_experiment/0"
+    parent_dir = "src/DRL-exploration/unity_end/human_robot_pkg/results/Interest_region/IRS_experiment/Kasthuri/0"
     parser.add_argument("--map-image", default=parent_dir + "/final_map.png", help="Path to the saved map image.")
     parser.add_argument(
         "--map-metadata",
@@ -55,12 +56,37 @@ def parse_args() -> argparse.Namespace:
         default="interest_regions",
         help="Prefix for generated files.",
     )
+    parser.add_argument(
+        "--robot-odom",
+        default=parent_dir + "/robot_odom.csv",
+        help="Path to the timestamped robot odometry CSV produced by map_logger.py.",
+    )
     return parser.parse_args()
 
 
 def load_map_metadata(metadata_path: Path) -> Dict[str, object]:
     with metadata_path.open("r", encoding="utf-8") as metadata_file:
         return json.load(metadata_file)
+
+
+def load_robot_odom(odom_path: Path) -> List[OdomSample]:
+    if not odom_path.is_file():
+        return []
+
+    samples: List[OdomSample] = []
+    with odom_path.open("r", newline="", encoding="utf-8") as odom_file:
+        reader = csv.DictReader(odom_file)
+        for row in reader:
+            try:
+                timestamp = float(row["timestamp_sec"])
+                x = float(row["x"])
+                y = float(row["y"])
+            except (KeyError, TypeError, ValueError):
+                continue
+            samples.append((timestamp, x, y))
+
+    samples.sort(key=lambda sample: sample[0])
+    return samples
 
 
 def get_bounding_boxes(
@@ -144,6 +170,13 @@ def clamp_box_to_image(
     return x_min, y_min, x_max, y_max
 
 
+def point_in_box(x: float, y: float, box: BoundingBox) -> bool:
+    (x1, y1), (x2, y2) = box
+    min_x, max_x = sorted((x1, x2))
+    min_y, max_y = sorted((y1, y2))
+    return min_x <= x <= max_x and min_y <= y <= max_y
+
+
 def load_boxes_by_region(
     tile_centers_dir: Path,
     tile_center_files: Sequence[str],
@@ -213,7 +246,67 @@ def count_cells_in_boxes(
     return counts, explored_in_union, total_union_cells, union_mask
 
 
-def save_counts_csv(output_path: Path, counts: Sequence[Dict[str, int]]) -> None:
+def append_robot_time_metrics(
+    counts: List[Dict[str, int | float]],
+    boxes_by_region: Dict[str, List[BoundingBox]],
+    robot_odom_samples: Sequence[OdomSample],
+) -> Tuple[float, float]:
+    for box_count in counts:
+        box_count["robot_time_inside_s"] = 0.0
+        box_count["robot_time_inside_pct"] = 0.0
+
+    if len(robot_odom_samples) < 2:
+        return 0.0, 0.0
+
+    total_duration = 0.0
+    total_union_duration = 0.0
+
+    for count, box in zip(
+        counts,
+        [box for region_boxes in boxes_by_region.values() for box in region_boxes],
+    ):
+        box_duration = 0.0
+        for (timestamp, x, y), (next_timestamp, _, _) in zip(
+            robot_odom_samples,
+            robot_odom_samples[1:],
+        ):
+            dt = next_timestamp - timestamp
+            if dt <= 0.0:
+                continue
+            if point_in_box(x, y, box):
+                box_duration += dt
+
+        count["robot_time_inside_s"] = box_duration
+
+    for (timestamp, x, y), (next_timestamp, _, _) in zip(
+        robot_odom_samples,
+        robot_odom_samples[1:],
+    ):
+        dt = next_timestamp - timestamp
+        if dt <= 0.0:
+            continue
+
+        total_duration += dt
+        if any(point_in_box(x, y, box) for region_boxes in boxes_by_region.values() for box in region_boxes):
+            total_union_duration += dt
+
+    if total_duration <= 0.0:
+        return 0.0, 0.0
+
+    for count in counts:
+        count["robot_time_inside_pct"] = (float(count["robot_time_inside_s"]) / total_duration) * 100.0
+
+    return total_duration, total_union_duration
+
+
+def save_counts_csv(
+    output_path: Path,
+    counts: Sequence[Dict[str, int | float | str]],
+    explored_in_union: int,
+    total_union_cells: int,
+    total_robot_time_s: float,
+    robot_time_in_box_union_s: float,
+) -> None:
     with output_path.open("w", newline="", encoding="utf-8") as csv_file:
         fieldnames = [
             "region",
@@ -224,10 +317,28 @@ def save_counts_csv(output_path: Path, counts: Sequence[Dict[str, int]]) -> None
             "y_max",
             "explored_cells",
             "total_cells",
+            "robot_time_inside_s",
+            "robot_time_inside_pct",
         ]
         writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(counts)
+        writer.writerow(
+            {
+                "region": "ALL_BOXES",
+                "box_index": 0,
+                "x_min": -1,
+                "y_min": -1,
+                "x_max": -1,
+                "y_max": -1,
+                "explored_cells": explored_in_union,
+                "total_cells": total_union_cells,
+                "robot_time_inside_s": robot_time_in_box_union_s,
+                "robot_time_inside_pct": (
+                    (robot_time_in_box_union_s / total_robot_time_s) * 100.0 if total_robot_time_s > 0.0 else 0.0
+                ),
+            }
+        )
 
 
 def save_summary_json(
@@ -237,13 +348,22 @@ def save_summary_json(
     counts: Sequence[Dict[str, int]],
     explored_in_union: int,
     total_union_cells: int,
+    robot_odom_path: Path,
+    total_robot_time_s: float,
+    robot_time_in_box_union_s: float,
 ) -> None:
     summary = {
         "map_image": str(map_image_path.resolve()),
         "map_metadata": str(metadata_path.resolve()),
+        "robot_odom": str(robot_odom_path.resolve()),
         "box_count": len(counts),
         "explored_cells_in_box_union": explored_in_union,
         "total_cells_in_box_union": total_union_cells,
+        "robot_total_time_s": total_robot_time_s,
+        "robot_time_in_box_union_s": robot_time_in_box_union_s,
+        "robot_time_in_box_union_pct": (
+            (robot_time_in_box_union_s / total_robot_time_s) * 100.0 if total_robot_time_s > 0.0 else 0.0
+        ),
         "boxes": list(counts),
     }
     with output_path.open("w", encoding="utf-8") as summary_file:
@@ -287,6 +407,7 @@ def main() -> None:
     metadata_path = Path(args.map_metadata)
     tile_centers_dir = Path(args.tile_centers_dir)
     output_dir = Path(args.output_dir)
+    robot_odom_path = Path(args.robot_odom)
     output_dir.mkdir(parents=True, exist_ok=True)
 
     image = np.array(Image.open(map_image_path).convert("L"))
@@ -305,12 +426,25 @@ def main() -> None:
         metadata,
         unknown_value,
     )
+    robot_odom_samples = load_robot_odom(robot_odom_path)
+    total_robot_time_s, robot_time_in_box_union_s = append_robot_time_metrics(
+        counts,
+        boxes_by_region,
+        robot_odom_samples,
+    )
 
     csv_path = output_dir / f"{args.output_prefix}_counts.csv"
     json_path = output_dir / f"{args.output_prefix}_summary.json"
     annotated_path = output_dir / f"{args.output_prefix}_annotated.png"
 
-    save_counts_csv(csv_path, counts)
+    save_counts_csv(
+        csv_path,
+        counts,
+        explored_in_union,
+        total_union_cells,
+        total_robot_time_s,
+        robot_time_in_box_union_s,
+    )
     save_summary_json(
         json_path,
         map_image_path,
@@ -318,6 +452,9 @@ def main() -> None:
         counts,
         explored_in_union,
         total_union_cells,
+        robot_odom_path,
+        total_robot_time_s,
+        robot_time_in_box_union_s,
     )
     render_annotated_image(image, counts, union_mask, annotated_path)
 
@@ -325,6 +462,11 @@ def main() -> None:
     print(f"Saved summary JSON: {json_path}")
     print(f"Saved annotated image: {annotated_path}")
     print(f"Explored cells in bounding-box union: {explored_in_union}")
+    print(f"Robot time in bounding-box union (s): {robot_time_in_box_union_s:.3f}")
+    if total_robot_time_s > 0.0:
+        print(f"Robot time in bounding-box union (%): {(robot_time_in_box_union_s / total_robot_time_s) * 100.0:.2f}")
+    else:
+        print("Robot time in bounding-box union (%): 0.00")
 
 
 if __name__ == "__main__":

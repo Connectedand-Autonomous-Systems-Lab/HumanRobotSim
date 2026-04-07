@@ -16,6 +16,7 @@ from .interest_region_frontier_filter import (
     get_bounding_boxes,
     is_inside_interest_region,
 )
+from human_robot_pkg.msg import FrontierMsg, FrontierArrayMsg
 
 
 # ----------------------------
@@ -361,7 +362,7 @@ class FrontierDetectorNode(Node):
         self.declare_parameter('interest_region_scale', 0.0)
         self.declare_parameter('min_frontier_size_m', 0.1)
         self.declare_parameter('min_wall_distance_m', 0.3)
-        self.declare_parameter('frame_id', 'map')
+        self.declare_parameter('frame_id', 'merged_map')
 
         map_topic = self.get_parameter('map_topic').get_parameter_value().string_value
         odom_topic = self.get_parameter('odom_topic').get_parameter_value().string_value
@@ -401,6 +402,7 @@ class FrontierDetectorNode(Node):
         # Pubs
         self.frontiers_pub = self.create_publisher(PoseArray, self.frontiers_topic, 10)
         self.markers_pub = self.create_publisher(MarkerArray, self.markers_topic, 10)
+        self.frontiers_pub_custom = self.create_publisher(FrontierArrayMsg, '/frontiers_full', 10)
 
         # Timer
         period = 1.0 / max(0.1, publish_rate)
@@ -427,6 +429,17 @@ class FrontierDetectorNode(Node):
         with self._lock:
             self._robot_point = p
             self._odom_received = True
+
+    def to_frontier_msg(self, f: Frontier) -> FrontierMsg:
+        msg = FrontierMsg()
+        msg.points = f.points
+        msg.size = f.size
+        msg.initial = f.initial
+        msg.centroid = f.centroid
+        msg.middle = f.middle
+        msg.min_distance = f.min_distance
+        msg.cost = f.cost
+        return msg
 
     def _tick(self) -> None:
         with self._lock:
@@ -458,6 +471,13 @@ class FrontierDetectorNode(Node):
             pa.poses.append(pose)
 
         self.frontiers_pub.publish(pa)
+
+        out = FrontierArrayMsg()
+        out.header.stamp = self.get_clock().now().to_msg()
+        out.header.frame_id = self.frame_id
+        out.frontiers = [self.to_frontier_msg(f) for f in frontiers]
+
+        self.frontiers_pub_custom.publish(out)
 
         # Publish markers (centroid spheres + middle spheres)
         ma = MarkerArray()
