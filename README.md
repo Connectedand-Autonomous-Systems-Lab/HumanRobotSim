@@ -13,4 +13,4 @@ This repository contains the ROS-side workspace and supporting assets for runnin
 ## Setup the system in following order
 
 - Unity setup: [Unity repository](https://github.com/Connected-and-Autonomous-Systems-Lab/Collaboration.git)
-- ROS workspace setup: [ROS workspace](readme_files/rosws_README.md)
+- ROS workspace and middleware setup: [ROS workspace](readme_files/rosws_README.md)
