@@ -1,6 +1,6 @@
-# ConCord: Human-in-the-Loop Cooperative Robot Exploration
+# ConCord Simulation Engine
 
-ConCord is a collaborative exploration system that combines human behavior data, robot autonomy, Unity-based simulation, and ROS 2 tooling for human-robot cooperative search.
+ConCord is a collaborative exploration system that incorporates humans as real-time agents in the robotic ecosystem to support cooperative search and exploration. This simulation engine combines human sensor data (Point-of-View images, motion, depth scans), robot autonomy, Unity-based simulation, and ROS 2 tooling to provide a scalable experimentation in simulation.
 
 <p align="center">
   <img src="readme_files/sim-engine.jpg" alt="ConCord simulation pipeline" width="55%" />
@@ -8,7 +8,7 @@ ConCord is a collaborative exploration system that combines human behavior data,
 
 ## Overview
 
-This repository contains the ROS-side workspace and supporting assets for running ConCord experiments. The project is designed to work alongside the Unity simulation environment, with ROS handling mapping, frontier generation, navigation, and experiment orchestration.
+This repository contains the ROS-side workspace and supporting assets for running ConCord experiments. The project is designed to work alongside the Unity simulation environment, with ROS2 integration for handling simultaneous localization and mapping, frontier exploration, navigation, and experiment orchestration.
 
 ## Setup the system in following order
 
