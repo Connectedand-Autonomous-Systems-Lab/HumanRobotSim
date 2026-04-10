@@ -1,6 +1,6 @@
 # **ConCord: Human-in-the-Loop, Cooperative Robot Exploration**
 
-This is the code base for implementing ROS environment block of **ConCord: Human-in-the-Loop, Cooperative Robot Exploration**.
+This is the code base for implementing ROS environment block of the simulation engine.
 
 <img src="sim-engine.jpg" width="50%" />
 
