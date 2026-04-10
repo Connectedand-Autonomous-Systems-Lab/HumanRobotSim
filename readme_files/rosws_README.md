@@ -4,7 +4,7 @@ This is the code base for implementing ROS environment block of the simulation e
 
 <img src="sim-engine.jpg" width="50%" />
 
-This simulation is intent to run along with Unity. First setup Unity Scene block mentioned in the diagram referring to the repository [Unity repository](https://github.com/Connected-and-Autonomous-Systems-Lab/Collaboration.git). 
+This simulation is intended to run along with Unity. If you have not done so, please setup the Unity Scene block from here [Unity repository](https://github.com/Connected-and-Autonomous-Systems-Lab/Collaboration.git). 
 
 <img src="collaborative_search_10min_16x_masked.gif" width="80%" />
 
