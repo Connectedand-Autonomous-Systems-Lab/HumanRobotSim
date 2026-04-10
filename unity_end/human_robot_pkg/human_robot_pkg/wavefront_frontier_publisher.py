@@ -14,9 +14,11 @@ from geometry_msgs.msg import PoseArray, Pose, Point
 from visualization_msgs.msg import Marker, MarkerArray
 from .interest_region_frontier_filter import (
     get_bounding_boxes,
+    get_seminar_junc_bounding_boxes,
     is_inside_interest_region,
 )
 from human_robot_pkg.msg import FrontierMsg, FrontierArrayMsg
+from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
 
 
 # ----------------------------
@@ -68,7 +70,8 @@ class FrontierSearch:
         self._origin_y: float = 0.0
 
         # Interest region parameters
-        self.interest_region_bounding_boxes = get_bounding_boxes('/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg/tile_centers/Tturn_tile_centers.txt')
+        # self.interest_region_bounding_boxes = get_bounding_boxes('/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg/tile_centers/Tturn_tile_centers.txt')
+        self.interest_region_bounding_boxes = get_seminar_junc_bounding_boxes()
 
     # ---------- Map helpers ----------
     def set_map(self, grid: OccupancyGrid) -> None:
@@ -354,8 +357,9 @@ class FrontierDetectorNode(Node):
         # Params
         self.declare_parameter('map_topic', '/merged_map')
         self.declare_parameter('odom_topic', '/odom')
+        self.declare_parameter('odom qos', 10)  # higher QoS for odom to reduce message drops and stale data
         self.declare_parameter('frontiers_topic', '/frontiers')
-        self.declare_parameter('markers_topic', '/frontier_markers')
+        # self.declare_parameter('markers_topic', '/frontier_markers')
         self.declare_parameter('publish_rate_hz', 1.0)
         self.declare_parameter('potential_scale', 50.0)
         self.declare_parameter('gain_scale', 0.01)
@@ -366,9 +370,10 @@ class FrontierDetectorNode(Node):
 
         map_topic = self.get_parameter('map_topic').get_parameter_value().string_value
         odom_topic = self.get_parameter('odom_topic').get_parameter_value().string_value
+        odom_qos_value = self.get_parameter('odom qos').get_parameter_value().integer_value
 
         self.frontiers_topic = self.get_parameter('frontiers_topic').get_parameter_value().string_value
-        self.markers_topic = self.get_parameter('markers_topic').get_parameter_value().string_value
+        # self.markers_topic = self.get_parameter('markers_topic').get_parameter_value().string_value
 
         self.frame_id = self.get_parameter('frame_id').get_parameter_value().string_value
 
@@ -395,13 +400,19 @@ class FrontierDetectorNode(Node):
         self._odom_received = False
 
         # Subs
+        odom_qos = QoSProfile(
+            reliability=QoSReliabilityPolicy.BEST_EFFORT,
+            history=QoSHistoryPolicy.KEEP_LAST,
+            depth=odom_qos_value,
+        )
+
         # Keep explicit references to subscriptions so they are not garbage-collected
         self._map_sub = self.create_subscription(OccupancyGrid, map_topic, self._on_map, 10)
-        self._odom_sub = self.create_subscription(Odometry, odom_topic, self._on_odom, 50)
+        self._odom_sub = self.create_subscription(Odometry, odom_topic, self._on_odom, odom_qos)
 
         # Pubs
         self.frontiers_pub = self.create_publisher(PoseArray, self.frontiers_topic, 10)
-        self.markers_pub = self.create_publisher(MarkerArray, self.markers_topic, 10)
+        # self.markers_pub = self.create_publisher(MarkerArray, self.markers_topic, 10)
         self.frontiers_pub_custom = self.create_publisher(FrontierArrayMsg, '/frontiers_full', 10)
 
         # Timer
@@ -412,7 +423,7 @@ class FrontierDetectorNode(Node):
         self._timer = self.create_timer(period, self._tick, clock=self._steady_clock)
 
         self.get_logger().info(f"FrontierDetectorNode listening to {map_topic} and {odom_topic}")
-        self.get_logger().info(f"Publishing PoseArray on {self.frontiers_topic} and MarkerArray on {self.markers_topic}")
+        self.get_logger().info(f"Publishing PoseArray on {self.frontiers_topic} ")
 
     def _on_map(self, msg: OccupancyGrid) -> None:
         with self._lock:
@@ -479,47 +490,47 @@ class FrontierDetectorNode(Node):
 
         self.frontiers_pub_custom.publish(out)
 
-        # Publish markers (centroid spheres + middle spheres)
-        ma = MarkerArray()
-        now = self.get_clock().now().to_msg()
+        # # Publish markers (centroid spheres + middle spheres)
+        # ma = MarkerArray()
+        # now = self.get_clock().now().to_msg()
 
-        # centroid markers
-        for i, f in enumerate(frontiers):
-            m = Marker()
-            m.header.stamp = now
-            m.header.frame_id = self.frame_id
-            m.ns = "frontier_centroids"
-            m.id = i
-            m.type = Marker.SPHERE
-            m.action = Marker.ADD
-            m.pose.position = f.centroid
-            m.pose.orientation.w = 1.0
-            m.scale.x = 0.2
-            m.scale.y = 0.2
-            m.scale.z = 0.2
-            # leave color default; RViz will show it if you set it or via topic tools
-            m.color.a = 1.0
-            ma.markers.append(m)
+        # # centroid markers
+        # for i, f in enumerate(frontiers):
+        #     m = Marker()
+        #     m.header.stamp = now
+        #     m.header.frame_id = self.frame_id
+        #     m.ns = "frontier_centroids"
+        #     m.id = i
+        #     m.type = Marker.SPHERE
+        #     m.action = Marker.ADD
+        #     m.pose.position = f.centroid
+        #     m.pose.orientation.w = 1.0
+        #     m.scale.x = 0.2
+        #     m.scale.y = 0.2
+        #     m.scale.z = 0.2
+        #     # leave color default; RViz will show it if you set it or via topic tools
+        #     m.color.a = 1.0
+        #     ma.markers.append(m)
 
-        # middle markers
-        base = 100000
-        for i, f in enumerate(frontiers):
-            m = Marker()
-            m.header.stamp = now
-            m.header.frame_id = self.frame_id
-            m.ns = "frontier_middles"
-            m.id = base + i
-            m.type = Marker.CUBE
-            m.action = Marker.ADD
-            m.pose.position = f.middle
-            m.pose.orientation.w = 1.0
-            m.scale.x = 0.15
-            m.scale.y = 0.15
-            m.scale.z = 0.15
-            m.color.a = 1.0
-            ma.markers.append(m)
+        # # middle markers
+        # base = 100000
+        # for i, f in enumerate(frontiers):
+        #     m = Marker()
+        #     m.header.stamp = now
+        #     m.header.frame_id = self.frame_id
+        #     m.ns = "frontier_middles"
+        #     m.id = base + i
+        #     m.type = Marker.CUBE
+        #     m.action = Marker.ADD
+        #     m.pose.position = f.middle
+        #     m.pose.orientation.w = 1.0
+        #     m.scale.x = 0.15
+        #     m.scale.y = 0.15
+        #     m.scale.z = 0.15
+        #     m.color.a = 1.0
+        #     ma.markers.append(m)
 
-        self.markers_pub.publish(ma)
+        # self.markers_pub.publish(ma)
         self.get_logger().debug(f"Published {len(frontiers)} frontiers")
 
 

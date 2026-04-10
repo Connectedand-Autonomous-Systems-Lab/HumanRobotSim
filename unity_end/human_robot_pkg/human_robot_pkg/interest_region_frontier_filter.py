@@ -36,6 +36,39 @@ def get_bounding_boxes(tiles_center_path: str) -> List[BoundingBox]:
     return converted_boxes
 
 
+def get_seminar_junc_bounding_boxes() -> List[BoundingBox]:
+    corners_path = Path(
+        "/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg/"
+        "tile_centers/outer_rectangle_corners.txt"
+    )
+
+    bounding_boxes = []
+    current_rectangle = []
+
+    with open(corners_path, "r", encoding="utf-8") as f:
+        for raw_line in f:
+            line = raw_line.strip()
+            if not line:
+                if current_rectangle:
+                    xs = [point[0] for point in current_rectangle]
+                    ys = [point[1] for point in current_rectangle]
+                    bounding_boxes.append(
+                        ((min(xs), min(ys)), (max(xs), max(ys)))
+                    )
+                    current_rectangle = []
+                continue
+
+            x_str, y_str = line.split()
+            current_rectangle.append((float(x_str), float(y_str)))
+
+    if current_rectangle:
+        xs = [point[0] for point in current_rectangle]
+        ys = [point[1] for point in current_rectangle]
+        bounding_boxes.append(((min(xs), min(ys)), (max(xs), max(ys))))
+
+    return bounding_boxes
+
+
 def is_inside_interest_region(
     frontier_point: Point,
     bounding_boxes: Sequence[BoundingBox],
@@ -81,12 +114,15 @@ class InterestRegionFrontierFilter(Node):
         )
         self.tile_center_files = list(self.get_parameter("tile_center_files").value)
 
-        self.bounding_boxes_by_type = self._load_bounding_boxes()
-        self.bounding_boxes = [
-            box
-            for boxes in self.bounding_boxes_by_type.values()
-            for box in boxes
-        ]
+        # self.bounding_boxes_by_type = self._load_bounding_boxes()
+        
+        # self.bounding_boxes = [
+        #     box
+        #     for boxes in self.bounding_boxes_by_type.values()
+        #     for box in boxes
+        # ] 
+
+        self.bounding_boxes = get_seminar_junc_bounding_boxes()
 
         self.frontiers_sub = self.create_subscription(
             PoseArray,

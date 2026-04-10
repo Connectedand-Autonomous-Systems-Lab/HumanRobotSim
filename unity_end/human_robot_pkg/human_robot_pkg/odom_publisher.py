@@ -19,6 +19,15 @@ class OdomPublisherNode(Node):
             depth=10
         )
 
+        self.declare_parameter('Robot odom frame', 'odom')
+        self.declare_parameter('Robot base frame', 'Robot')
+        self.declare_parameter('Human odom frame', 'human/odom')
+        self.declare_parameter('Human base frame', 'human/base_footprint')
+        self.robot_odom_frame = self.get_parameter('Robot odom frame').value
+        self.robot_base_frame = self.get_parameter('Robot base frame').value
+        self.human_odom_frame = self.get_parameter('Human odom frame').value
+        self.human_base_frame = self.get_parameter('Human base frame').value
+
         # Publishers
         self.robot_pub = self.create_publisher(Odometry, '/odom', qos_profile)
         self.human_pub = self.create_publisher(Odometry, '/human/odom', qos_profile)
@@ -33,8 +42,8 @@ class OdomPublisherNode(Node):
         self.get_logger().info("OdomPublisherNode started. Publishing robot and human odometry...")
 
     def timer_callback(self):
-        self.publish_pose('odom', 'Robot', self.robot_pub, '/odom')
-        self.publish_pose('human/odom', 'human/base_footprint', self.human_pub, '/human/odom')
+        self.publish_pose(self.robot_odom_frame, self.robot_base_frame, self.robot_pub, '/odom')
+        self.publish_pose(self.human_odom_frame, self.human_base_frame, self.human_pub, '/human/odom')
 
     def publish_pose(self, parent_frame, child_frame, publisher, topic_name):
         try:
