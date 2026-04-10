@@ -1,6 +1,6 @@
 # ConCord Simulation Engine
 
-ConCord is a collaborative exploration system that incorporates humans as real-time agents in the robotic ecosystem to support cooperative search and exploration. This simulation engine combines human sensor data (Point-of-View images, motion, depth scans), robot autonomy, Unity-based simulation, and ROS 2 tooling to provide a scalable experimentation in simulation.
+ConCord is a collaborative exploration system that incorporates humans as real-time agents in the robotic ecosystem to support cooperative search and exploration. This simulation engine combines human sensor data (Point-of-View images, motion, depth scans), robot autonomy, Unity-based simulation, and ROS 2 tooling to provide a scalable experimentation space in simulation.
 
 <p align="center">
   <img src="readme_files/sim-engine.jpg" alt="ConCord simulation pipeline" width="55%" />
