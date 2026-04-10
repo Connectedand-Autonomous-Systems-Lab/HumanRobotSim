@@ -50,7 +50,6 @@ def generate_launch_description():
         executable='wavefront_frontier_publisher',
         output='screen',
         parameters=[{'use_sim_time':True},
-                    {'map_topic': '/merged_map'},
                     {'interest_region_scale': float(IRS)},]
     )
 
@@ -213,7 +212,7 @@ def generate_launch_description():
     )
     
     human_bag = ExecuteProcess(
-            cmd=['ros2', 'bag', 'play', 'src/DRL-exploration/dataset/Bimal/rosbag2_2025_12_04-17_01_38', ],
+            cmd=['ros2', 'bag', 'play', find_rosbag(f'/media/2TB/Collaborative_user_study/{user}/Hard'), ],
             output='screen'
         )
     
@@ -230,8 +229,8 @@ def generate_launch_description():
     map_logger = Node(
         package="human_robot_pkg",
         executable="map_logger",
-        parameters=[{'base_dir': 'results/ConCord'}]
-    )
+        parameters=[{'base_dir': '/home/mayooran/Documents/iros/src/DRL-exploration/unity_end/human_robot_pkg/results/Interest_region/IRS_experiment/'+ user + "/" + str(IRS)}]
+  )
 
     interest_region_frontier_filter = Node(
         package="human_robot_pkg",
@@ -261,7 +260,7 @@ def generate_launch_description():
         # delayed_navigation,
         # simple_navigator,
         
-        human_bag,
+        # human_bag,
         # scan_limiter,
         map_logger,
         odom_publisher,
