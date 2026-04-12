@@ -114,15 +114,15 @@ class InterestRegionFrontierFilter(Node):
         )
         self.tile_center_files = list(self.get_parameter("tile_center_files").value)
 
-        # self.bounding_boxes_by_type = self._load_bounding_boxes()
+        self.bounding_boxes_by_type = self._load_bounding_boxes()
         
-        # self.bounding_boxes = [
-        #     box
-        #     for boxes in self.bounding_boxes_by_type.values()
-        #     for box in boxes
-        # ] 
+        self.bounding_boxes = [
+            box
+            for boxes in self.bounding_boxes_by_type.values()
+            for box in boxes
+        ] 
 
-        self.bounding_boxes = get_seminar_junc_bounding_boxes()
+        # self.bounding_boxes = get_seminar_junc_bounding_boxes()
 
         self.frontiers_sub = self.create_subscription(
             PoseArray,

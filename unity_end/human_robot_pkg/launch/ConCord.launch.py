@@ -6,8 +6,8 @@ from ament_index_python.packages import get_package_share_directory
 from launch_ros.actions import Node, PushRosNamespace
 from launch.substitutions import LaunchConfiguration
 
-user = "Kasthuri" 
-IRS = 1000
+user = "Artifact" 
+IRS = 0
 
 def find_rosbag(parent_dir):
     folders = os.listdir(parent_dir)
@@ -230,7 +230,7 @@ def generate_launch_description():
     map_logger = Node(
         package="human_robot_pkg",
         executable="map_logger",
-        parameters=[{'base_dir': 'results/ConCord'}]
+        parameters=[{'base_dir': 'results/Artifact/0'}]
     )
 
     interest_region_frontier_filter = Node(
